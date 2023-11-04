@@ -2,6 +2,8 @@
 
 void setup() {
   pinMode(13, OUTPUT);
+
+  Serial.begin(9600);
 }
 
 void loop() {
@@ -9,5 +11,9 @@ void loop() {
   delay(1000);
   digitalWrite(13, LOW);
   delay(1000);
+
+  
+  Serial.print("X1 LIMIT: ");
+  Serial.println(digitalRead(2));
 }
 
