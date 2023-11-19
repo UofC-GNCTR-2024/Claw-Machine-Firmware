@@ -24,14 +24,14 @@
 
 // Stepper Motor Output Pins
 #define PIN_X1_NEN       26
-#define PIN_X1_STEP      27
-#define PIN_X1_DIR       28
+#define PIN_X1_STEP      28
+#define PIN_X1_DIR       27
 #define PIN_X2_NEN       29
-#define PIN_X2_STEP      30
-#define PIN_X2_DIR       31
+#define PIN_X2_STEP      31
+#define PIN_X2_DIR       30
 #define PIN_Y_NEN        32
-#define PIN_Y_STEP       33
-#define PIN_Y_DIR        34
+#define PIN_Y_STEP       34
+#define PIN_Y_DIR        33
 
 // DC Motor Output Pins
 #define PIN_Z_DC_IN1     35
