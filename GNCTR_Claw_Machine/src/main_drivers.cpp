@@ -1,5 +1,6 @@
 
 #include "main.h"
+#include <AccelStepper.h>
 
 void init_pin_modes()
 {
@@ -211,4 +212,18 @@ void debug_print_all_limit_switch_states(bool verbose)
         }
         Serial.println();
     }
+}
+
+AccelStepper& init_stepper(AccelStepper &stepper, uint8_t enablePin, uint8_t stepPin, uint8_t dirPin, bool reverse)
+{
+    stepper = AccelStepper(AccelStepper::DRIVER, stepPin, dirPin);
+    stepper.setEnablePin(enablePin);
+    stepper.setPinsInverted(reverse, false, true);  // Invert enable pin because it's active-low
+
+    stepper.setMaxSpeed(STEPPER_MICROSTEPS * 10000);
+    stepper.setAcceleration(STEPPER_MICROSTEPS * 5);
+    // stepper.setSpeed(500*16);
+    stepper.enableOutputs();
+
+    return stepper;
 }

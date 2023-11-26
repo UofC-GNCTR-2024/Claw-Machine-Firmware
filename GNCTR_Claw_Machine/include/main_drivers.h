@@ -4,6 +4,9 @@
 #define __INCLUDE_GUARD_MAIN_DRIVERS_H_CLAW_MACHINE__
 
 #include "main.h"
+#include <AccelStepper.h>
+
+#define STEPPER_MICROSTEPS 16.0
 
 typedef enum {
     LIMIT_X1,
@@ -42,5 +45,8 @@ void set_z_motor_state(z_motor_direction_t direction);
 
 void debug_print_all_limit_switch_states();
 void debug_print_all_limit_switch_states(bool verbose);
+
+
+AccelStepper& init_stepper(AccelStepper &stepper, uint8_t enablePin, uint8_t stepPin, uint8_t dirPin, bool reverse);
 
 #endif // __INCLUDE_GUARD_MAIN_DRIVERS_H_CLAW_MACHINE__
