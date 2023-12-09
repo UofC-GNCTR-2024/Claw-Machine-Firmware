@@ -35,7 +35,38 @@ void setup()
 }
 
 
-void loop()
+void loop_dropOrRaiseClaw()
+{
+    bool upButton = digitalRead(PIN_STICK_NORTH_BTN);
+    bool downButton = digitalRead(PIN_STICK_SOUTH_BTN);
+
+    if (upButton == HIGH) {
+        Serial.println("Moving claw up");
+        set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
+    }
+    else if (downButton == HIGH) {
+        Serial.println("Moving claw down");
+        set_z_motor_state(Z_MOTOR_DIRECTION_DROP);
+    }
+    else {
+        Serial.println("Stopping claw");
+        set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
+    }
+
+    // do claw
+    if (get_switch_state(LIMIT_X1) == true) {
+        Serial.println("X1 limit switch triggered - close claw");
+        set_claw_state(true);
+    }
+    else {
+        Serial.println("X1 limit switch not triggered - open claw");
+        set_claw_state(false);
+    }
+
+}
+
+
+void loop_moveMotorsBasedOnButtons()
 {
     northButton = digitalRead(PIN_STICK_NORTH_BTN);
     southButton = digitalRead(PIN_STICK_SOUTH_BTN);
@@ -96,4 +127,13 @@ void loop()
         yStepper.runSpeed();
     }
 
+}
+
+
+void loop()
+{
+    // loop_moveMotorsBasedOnButtons();
+
+    loop_dropOrRaiseClaw();
+    
 }
