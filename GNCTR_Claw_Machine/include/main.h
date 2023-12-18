@@ -10,6 +10,4 @@
 #include "pin_defs.h"
 #include "main_drivers.h"
 
-
-
 #endif // __INCLUDE_GUARD_MAIN_H_CLAW_MACHINE__

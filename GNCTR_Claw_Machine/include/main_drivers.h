@@ -12,7 +12,7 @@ typedef enum {
     LIMIT_X1,
     LIMIT_X2,
     LIMIT_Y,
-    INPUT_BTN_1,
+    START_BTN,
     INPUT_BTN_2,
     INPUT_BTN_3,
     AUX_SW_1,
@@ -30,12 +30,17 @@ typedef enum {
     Z_MOTOR_DIRECTION_STOP
 } z_motor_direction_t;
 
+typedef enum {
+    CLAW_ENGAGE,
+    CLAW_RELEASE
+} claw_mode_t;
+
 
 void init_pin_modes();
 
 
 /* True=Enable/Grab, False=Disable/Release. */
-void set_claw_state(bool state);
+void set_claw_state(claw_mode_t state);
 
 /* True=Triggered, False=Not Triggered. */
 bool get_switch_state(limit_switch_t limit_switch);
@@ -48,5 +53,11 @@ void debug_print_all_limit_switch_states(bool verbose);
 
 
 AccelStepper& init_stepper(AccelStepper &stepper, uint8_t enablePin, uint8_t stepPin, uint8_t dirPin, bool reverse);
+
+void init_steppers();
+
+void loop_moveMotorsBasedOnButtons();
+void loop_dropOrRaiseClaw();
+
 
 #endif // __INCLUDE_GUARD_MAIN_DRIVERS_H_CLAW_MACHINE__
