@@ -2,7 +2,7 @@
 #include "states.h"
 #include <Arduino.h>
 
-game_state_t game_state = IDLE;
+game_state_t game_state = GAME_STATE_IDLE;
 
 void setup()
 {
@@ -15,13 +15,13 @@ void setup()
 void loop()
 {
     switch (game_state) {
-        case IDLE:
+        case GAME_STATE_IDLE:
             game_state = idle_state(game_state);
             break;
-        case PLAY:
+        case GAME_STATE_PLAY:
             game_state = play_state(game_state);
             break;
-        case RESET:
+        case GAME_STATE_RESET:
             game_state = reset_state(game_state);
             break;
     }

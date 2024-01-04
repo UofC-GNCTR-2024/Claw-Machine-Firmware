@@ -1,10 +1,11 @@
+
 #ifndef __INCLUDE_GUARD_STATES_H_CLAW_MACHINE__
 #define __INCLUDE_GUARD_STATES_H_CLAW_MACHINE__
 
 typedef enum {
-    IDLE,  // Waiting for someone to press start
-    PLAY,  // Controlling the claw
-    RESET  // Return the claw to the home position
+    GAME_STATE_IDLE,  // Waiting for someone to press start
+    GAME_STATE_PLAY,  // Controlling the claw
+    GAME_STATE_RESET  // Return the claw to the home position
 } game_state_t;
 
 typedef enum {
