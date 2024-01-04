@@ -12,12 +12,11 @@ typedef enum {
     LIMIT_X1,
     LIMIT_X2,
     LIMIT_Y,
+    CLAW_UP_BTN,
+    CLAW_DOWN_BTN,
+    CLAW_GRAB_BTN,
     START_BTN,
-    INPUT_BTN_2,
-    INPUT_BTN_3,
-    AUX_SW_1,
     AUX_SW_2,
-    AUX_SW_3,
     STICK_NORTH,
     STICK_EAST,
     STICK_SOUTH,
@@ -47,6 +46,7 @@ bool get_switch_state(limit_switch_t limit_switch);
 
 void set_z_motor_state(z_motor_direction_t direction);
 
+void set_start_button_led(bool state);
 
 void debug_print_all_limit_switch_states();
 void debug_print_all_limit_switch_states(bool verbose);

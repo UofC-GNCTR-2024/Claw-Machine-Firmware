@@ -6,7 +6,7 @@ game_state_t idle_state(game_state_t prev)
 {
     if (prev != GAME_STATE_IDLE) {
         // TODO display a welcome message
-        Serial.println("GAME_STATE_IDLE state");
+        Serial.println("Starting GAME_STATE_IDLE state");
         return GAME_STATE_IDLE;
     }
     
@@ -19,7 +19,7 @@ game_state_t idle_state(game_state_t prev)
 game_state_t play_state(game_state_t prev)
 {
     if (prev != GAME_STATE_PLAY) {
-        Serial.println("Play state");
+        Serial.println("Starting GAME_STATE_PLAY state");
         ; // TODO screen message
     }
     loop_moveMotorsBasedOnButtons();
@@ -30,6 +30,11 @@ game_state_t play_state(game_state_t prev)
 // This function blocks
 game_state_t reset_state(game_state_t prev)
 {
+    if (prev != GAME_STATE_IDLE) {
+        Serial.println("Starting GAME_STATE_IDLE state");
+        ; // TODO screen message
+    }
+
     // TODO "game over" message
     // TODO release the claw
 
