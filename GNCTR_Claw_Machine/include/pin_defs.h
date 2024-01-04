@@ -38,8 +38,8 @@
 #define PIN_Z_DC_IN2     36
 #define PIN_Z_DC_IN3     37
 #define PIN_Z_DC_IN4     38
-#define PIN_Z_DC_EN_A    39 // EN for IN1 and IN2 // TODO: confirm
-#define PIN_Z_DC_EN_B    40 // EN for IN3 and IN4 // TODO: confirm
+#define PIN_Z_DC_EN_A    39 // EN for IN1 and IN2
+#define PIN_Z_DC_EN_B    40 // EN for IN3 and IN4
 // DC Motor Encoder Pins
 #define PIN_Z_ENC_SIG_1  51
 #define PIN_Z_ENC_SIG_2  52

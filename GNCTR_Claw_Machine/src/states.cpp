@@ -18,12 +18,11 @@ uint32_t idle_start_time_ms = 0;
 game_state_t idle_state(game_state_t prev)
 {
     if (prev != GAME_STATE_IDLE) {
-        // TODO display a welcome message
         Serial.println("Starting GAME_STATE_IDLE state");
         idle_start_time_ms = millis();
     }
 
-    // display scrolling text: "Press Start"
+    // display scrolling text: "Press Start" (non-blocking)
     display_scrolling_press_start(idle_start_time_ms);
 
     // flash the START_BTN LED
@@ -47,7 +46,6 @@ game_state_t play_state(game_state_t prev)
     if (prev != GAME_STATE_PLAY) {
         Serial.println("Starting GAME_STATE_PLAY state");
         set_start_button_led(false);
-        ; // TODO screen message
     }
     else {
         Serial.println("Continuing GAME_STATE_PLAY state (should not happen)");

@@ -140,7 +140,7 @@ void set_z_motor_state(z_motor_direction_t direction)
 {
     if (direction == Z_MOTOR_DIRECTION_DROP) {
         digitalWrite(PIN_Z_DC_EN_A, HIGH);
-        digitalWrite(PIN_Z_DC_IN1, HIGH); // TODO: confirm direction
+        digitalWrite(PIN_Z_DC_IN1, HIGH);
         digitalWrite(PIN_Z_DC_IN2, LOW);
         // Serial.println("DEBUG: Z motor dropping.");
     }
