@@ -1,7 +1,13 @@
 {
 	"folders": [
 		{
-			"path": "."
+			"path": ".",
+			"exclude": [
+				"GNCTR_Claw_Machine/"
+			],
+		},
+		{
+			"path": "GNCTR_Claw_Machine"
 		}
 	],
 	"settings": {}
