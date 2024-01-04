@@ -61,4 +61,20 @@ void loop_dropOrRaiseClaw();
 
 void i2c_scan();
 
+void display_duration_sec(uint32_t duration_sec);
+void display_duration_ms(uint32_t duration_ms);
+void display_blinking_zeros();
+void display_scrolling_press_start(uint32_t idle_start_time_ms);
+void display_int(uint16_t int_val);
+
+
+#define SEG_A   0b00000001
+#define SEG_B   0b00000010
+#define SEG_C   0b00000100
+#define SEG_D   0b00001000
+#define SEG_E   0b00010000
+#define SEG_F   0b00100000
+#define SEG_G   0b01000000
+#define SEG_DP  0b10000000
+
 #endif // __INCLUDE_GUARD_MAIN_DRIVERS_H_CLAW_MACHINE__

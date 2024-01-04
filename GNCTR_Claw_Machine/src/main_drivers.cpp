@@ -21,9 +21,6 @@ int prevXdir = 0, prevYdir = 0;
 
 z_motor_direction_t prev_z_motor_direction = Z_MOTOR_DIRECTION_STOP;
 
-// X is North/South, Y is East/West
-int northButton, southButton, eastButton, westButton;
-
 
 void init_pin_modes()
 {
@@ -264,7 +261,7 @@ void init_steppers()
     Serial.println("DEBUG: init_steppers()");
     init_stepper(x1Stepper, PIN_X1_NEN, PIN_X1_STEP, PIN_X1_DIR, true);
     init_stepper(x2Stepper, PIN_X2_NEN, PIN_X2_STEP, PIN_X2_DIR, false);
-    init_stepper(yStepper, PIN_Y_NEN, PIN_Y_STEP, PIN_Y_DIR, false);
+    init_stepper(yStepper, PIN_Y_NEN, PIN_Y_STEP, PIN_Y_DIR, true);
 
     xSteppers = MultiStepper();
     xSteppers.addStepper(x1Stepper);
@@ -273,13 +270,14 @@ void init_steppers()
 
 void loop_moveMotorsBasedOnButtons()
 {
-    northButton = get_switch_state(STICK_NORTH);
-    southButton = get_switch_state(STICK_SOUTH);
-    eastButton  = get_switch_state(STICK_EAST);
-    westButton  = get_switch_state(STICK_WEST);
+    // X is North/South, Y is East/West
+    bool northButton = get_switch_state(STICK_NORTH);
+    bool southButton = get_switch_state(STICK_SOUTH);
+    bool eastButton  = get_switch_state(STICK_EAST);
+    bool westButton  = get_switch_state(STICK_WEST);
     
     // Positive X direction
-    if (northButton == HIGH) {
+    if (northButton) {
         if (prevXdir != 1) {  // direction change
             Serial.println("Moving claw North");
             prevXdir = 1;
@@ -294,7 +292,7 @@ void loop_moveMotorsBasedOnButtons()
         // xSteppers.runSpeedToPosition();
     }
     // Negative X direction
-    else if (southButton == HIGH) {
+    else if (southButton) {
         if (prevXdir != -1) {  // direction change
             Serial.println("Moving claw South");
             prevXdir = -1;
@@ -308,7 +306,7 @@ void loop_moveMotorsBasedOnButtons()
     }
 
     // Positive Y direction
-    if (eastButton == HIGH) {
+    if (eastButton) {
         if (prevYdir != 1) {  // direction change
             Serial.println("Moving claw East");
             prevYdir = 1;
@@ -380,4 +378,68 @@ void i2c_scan() {
 	scanner.Init();
 	scanner.Scan();
     Serial.println("INFO: I2C scan complete.");
+}
+
+void display_duration_sec(uint32_t duration_sec) {
+    // Display the duration on the screen as mm:ss
+    
+    uint32_t sec = duration_sec % 60;
+    uint32_t min = duration_sec / 60;
+
+    display.setBlink(0);
+    display.displayTime(min, sec, true, true);  // args: colon=true, leading_zero=true
+    display.displayColon(1);
+}
+
+void display_duration_ms(uint32_t duration_ms) {
+    // Display the duration on the screen as ss.xx, where xx is the hundredths of a second.
+
+    float dur_sec = duration_ms / 1000.0;
+    display.setBlink(0);
+    display.displayColon(0);
+    display.displayFloat(dur_sec, 1); // 1 decimal place
+}
+
+void display_blinking_zeros() {
+    display.displayColon(0);
+    display.displayInt(0);
+    display.setBlink(1);
+}
+
+void display_int(uint16_t int_val) {
+    display.displayColon(0);
+    display.displayInt(int_val);
+    display.setBlink(0);
+}
+
+void display_scrolling_press_start(uint32_t idle_start_time_ms) {
+    display.setBlink(0);
+    display.displayColon(0);
+
+    const int msg_len = 14;
+    int offset = ((millis() - idle_start_time_ms) / 500) % (msg_len);
+
+    const uint8_t SEG_PRESS_START[] = {
+        SEG_A | SEG_B | SEG_F | SEG_E | SEG_G,           // P
+        SEG_E | SEG_G,                                   // r
+        SEG_A | SEG_D | SEG_E | SEG_F | SEG_G,           // E
+        SEG_A | SEG_F | SEG_G | SEG_C | SEG_D,           // S
+        SEG_A | SEG_F | SEG_G | SEG_C | SEG_D,           // S
+        0,
+        SEG_A | SEG_F | SEG_G | SEG_C | SEG_D,           // S
+        SEG_F | SEG_E | SEG_G | SEG_D,                   // t
+        SEG_A | SEG_B | SEG_C | SEG_E | SEG_F | SEG_G,   // A
+        SEG_E | SEG_G,                                   // r
+        SEG_F | SEG_E | SEG_G | SEG_D,                   // t
+        0,0,0
+    };
+    uint8_t seg1_data[] = {SEG_D, SEG_D, SEG_D, SEG_D};
+    // uint8_t seg2_data[] = {SEG_D, SEG_D, SEG_D, SEG_D};
+
+    for (int i = 0; i < 4; i++) {
+        seg1_data[i] = SEG_PRESS_START[(i+offset)%msg_len];
+        // seg2_data[i] = SEG_PRESS_START[(i+offset+5)%msg_len];
+    }
+
+    display.displayRaw(seg1_data);
 }
