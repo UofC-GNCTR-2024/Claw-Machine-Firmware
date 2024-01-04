@@ -2,7 +2,7 @@
 #include "main_drivers.h"
 
 uint16_t start_btn_led_blink_rate_ms = 400; // half-period
-uint16_t game_play_max_time_sec = 5;
+uint16_t game_play_max_time_sec = 30;
 
 // persistent vars for GAME_STATE_IDLE
 bool start_btn_led_state = false;

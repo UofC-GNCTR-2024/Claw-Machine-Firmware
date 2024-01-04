@@ -15,6 +15,11 @@ void setup()
 
     i2c_scan();
 
+    // DEBUG: print all limit switch states
+    // while (1) {
+    //     debug_print_all_limit_switch_states();
+    // }
+
     Serial.println("DEBUG: End of setup() ===============================");
 }
 
