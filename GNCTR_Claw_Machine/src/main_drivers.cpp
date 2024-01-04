@@ -19,9 +19,6 @@ long stepperMaxMulti[] = {stepperMaxPos, stepperMaxPos};
 // either -1 or +1 to indicate the previous direction in each axis
 int prevXdir = 0, prevYdir = 0;
 
-z_motor_direction_t prev_z_motor_direction = Z_MOTOR_DIRECTION_STOP;
-
-
 void init_pin_modes()
 {
     // Switch Input Pins
@@ -90,18 +87,6 @@ void init_display() {
     display.displayInt(0);
 }
 
-void set_claw_state(claw_mode_t state)
-{
-    if (state == CLAW_ENGAGE) {
-        digitalWrite(PIN_CLAW_EN, HIGH);
-        // Serial.println("DEBUG: Claw enabled.");
-    }
-    else if (state == CLAW_RELEASE) {
-        digitalWrite(PIN_CLAW_EN, LOW);
-        // Serial.println("DEBUG: Claw disabled.");
-    }
-}
-
 /* True=Triggered, False=Not Triggered. */
 bool get_switch_state(limit_switch_t limit_switch)
 {
@@ -133,32 +118,6 @@ bool get_switch_state(limit_switch_t limit_switch)
         default:
             Serial.println("ERROR: Coding error. Invalid limit_switch_t value.");
             return false;
-    }
-}
-
-void set_z_motor_state(z_motor_direction_t direction)
-{
-    if (direction == Z_MOTOR_DIRECTION_DROP) {
-        digitalWrite(PIN_Z_DC_EN_A, HIGH);
-        digitalWrite(PIN_Z_DC_IN1, HIGH);
-        digitalWrite(PIN_Z_DC_IN2, LOW);
-        // Serial.println("DEBUG: Z motor dropping.");
-    }
-    else if (direction == Z_MOTOR_DIRECTION_RAISE) {
-        digitalWrite(PIN_Z_DC_EN_A, HIGH);
-        digitalWrite(PIN_Z_DC_IN1, LOW);
-        digitalWrite(PIN_Z_DC_IN2, HIGH);
-        // Serial.println("DEBUG: Z motor raising.");
-    }
-    else if (direction == Z_MOTOR_DIRECTION_STOP) {
-        digitalWrite(PIN_Z_DC_EN_A, LOW);
-        digitalWrite(PIN_Z_DC_IN1, LOW);
-        digitalWrite(PIN_Z_DC_IN2, LOW);
-        // Serial.println("DEBUG: Z motor stopped.");
-    }
-    else {
-        Serial.println(
-            "ERROR: Coding error. Invalid z_motor_direction_t value.");
     }
 }
 
@@ -329,47 +288,6 @@ void loop_moveMotorsBasedOnButtons()
         // yStepper.runSpeedToPosition();
         yStepper.runSpeed();
     }
-
-}
-
-void loop_dropOrRaiseClaw()
-{
-    bool upButton = get_switch_state(CLAW_UP_BTN);
-    bool downButton = get_switch_state(CLAW_DOWN_BTN);
-
-    z_motor_direction_t z_motor_direction = Z_MOTOR_DIRECTION_STOP;
-
-    if (upButton && downButton) {
-        // Serial.println("INFO: Both up and down buttons pressed.");
-        z_motor_direction = Z_MOTOR_DIRECTION_STOP;
-    }
-    else if (upButton) {
-        // Serial.println("INFO: Moving claw up");
-        z_motor_direction = Z_MOTOR_DIRECTION_RAISE;
-    }
-    else if (downButton) {
-        // Serial.println("INFO: Moving claw down");
-        // TODO: add a maximum net duration that the claw can move down for
-        z_motor_direction = Z_MOTOR_DIRECTION_DROP;
-    }
-    set_z_motor_state(z_motor_direction);
-
-    // special case to make the claw stop better, when it transitions from down to stop
-    if (z_motor_direction == Z_MOTOR_DIRECTION_STOP && prev_z_motor_direction == Z_MOTOR_DIRECTION_DROP) {
-        set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
-        delay(40);
-        set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
-    }
-    prev_z_motor_direction = z_motor_direction;
-
-    // do claw
-    if (get_switch_state(CLAW_GRAB_BTN)) {
-        set_claw_state(CLAW_ENGAGE);
-    }
-    else {
-        set_claw_state(CLAW_RELEASE);
-    }
-
 }
 
 void i2c_scan() {

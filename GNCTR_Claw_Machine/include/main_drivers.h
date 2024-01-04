@@ -23,29 +23,13 @@ typedef enum {
     STICK_WEST
 } limit_switch_t;
 
-typedef enum {
-    Z_MOTOR_DIRECTION_DROP,
-    Z_MOTOR_DIRECTION_RAISE,
-    Z_MOTOR_DIRECTION_STOP
-} z_motor_direction_t;
-
-typedef enum {
-    CLAW_ENGAGE,
-    CLAW_RELEASE
-} claw_mode_t;
-
 
 void init_pin_modes();
 void init_steppers();
 void init_display();
 
-/* True=Enable/Grab, False=Disable/Release. */
-void set_claw_state(claw_mode_t state);
-
 /* True=Triggered, False=Not Triggered. */
 bool get_switch_state(limit_switch_t limit_switch);
-
-void set_z_motor_state(z_motor_direction_t direction);
 
 void set_start_button_led(bool state);
 
@@ -57,7 +41,6 @@ AccelStepper& init_stepper(AccelStepper &stepper, uint8_t enablePin, uint8_t ste
 
 
 void loop_moveMotorsBasedOnButtons();
-void loop_dropOrRaiseClaw();
 
 void i2c_scan();
 

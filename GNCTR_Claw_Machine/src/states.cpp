@@ -1,5 +1,6 @@
 #include "states.h"
 #include "main_drivers.h"
+#include "claw_drivers.h"
 
 uint16_t start_btn_led_blink_rate_ms = 400; // half-period
 uint16_t game_play_max_time_sec = 30;
@@ -33,7 +34,7 @@ game_state_t idle_state(game_state_t prev)
     }
 
     // set the motors idle
-    set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
+    set_z_motor_state_raw(Z_MOTOR_DIRECTION_STOP);
     set_stepper_enable(0);
     
     // do a semi-sentient "clip-clip" with the claw like a crab
@@ -55,6 +56,15 @@ game_state_t idle_state(game_state_t prev)
     }
     else {
         set_claw_state(CLAW_RELEASE);
+    }
+
+    // secret z-axis homing mode (for the first 2 minutes after boot)
+    if (millis() < (120U * 1000U)) {
+        if (get_switch_state(CLAW_UP_BTN)) {
+            Serial.println("INFO: secret z-axis homing mode activated");
+            home_z_axis();
+            Serial.println("INFO: secret z-axis homing mode complete");
+        }
     }
 
     // next-state logic
@@ -132,13 +142,10 @@ game_state_t reset_state(game_state_t prev)
     // set known state
     set_start_button_led(false);
     set_claw_state(CLAW_ENGAGE);
-    set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
+    set_z_motor_state_raw(Z_MOTOR_DIRECTION_RAISE);
 
     // wait for claw to raise all the way, and then drop it a touch
-    delay(5000);
-    set_z_motor_state(Z_MOTOR_DIRECTION_DROP);
-    delay(50);
-    set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
+    home_z_axis();
 
 
     // move claw over bin in front
