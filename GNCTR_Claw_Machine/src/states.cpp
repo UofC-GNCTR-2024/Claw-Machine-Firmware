@@ -1,25 +1,39 @@
 #include "states.h"
 #include "main_drivers.h"
 
+uint16_t start_btn_led_blink_rate_ms = 400; // half-period
+
+bool start_btn_led_state = false;
+uint32_t start_btn_led_last_toggle_time_ms = 0;
 
 game_state_t idle_state(game_state_t prev)
 {
     if (prev != GAME_STATE_IDLE) {
         // TODO display a welcome message
         Serial.println("Starting GAME_STATE_IDLE state");
-        return GAME_STATE_IDLE;
     }
-    
-    if (get_switch_state(START_BTN))  // start button
+
+    // flash the START_BTN LED
+    if (millis() - start_btn_led_last_toggle_time_ms > start_btn_led_blink_rate_ms) {
+        start_btn_led_state = !start_btn_led_state;
+        set_start_button_led(start_btn_led_state);
+        start_btn_led_last_toggle_time_ms = millis();
+    }
+
+    // next-state logic
+    if (get_switch_state(START_BTN)) {
         return GAME_STATE_PLAY;
+    }
     
     return GAME_STATE_IDLE;
 }
 
 game_state_t play_state(game_state_t prev)
 {
+
     if (prev != GAME_STATE_PLAY) {
         Serial.println("Starting GAME_STATE_PLAY state");
+        set_start_button_led(false);
         ; // TODO screen message
     }
     loop_moveMotorsBasedOnButtons();
