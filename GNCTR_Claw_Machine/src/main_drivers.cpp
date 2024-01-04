@@ -15,6 +15,8 @@ long stepperMaxMulti[] = {stepperMaxPos, stepperMaxPos};
 // either -1 or +1 to indicate the previous direction in each axis
 int prevXdir = 0, prevYdir = 0;
 
+z_motor_direction_t prev_z_motor_direction = Z_MOTOR_DIRECTION_STOP;
+
 // X is North/South, Y is East/West
 int northButton, southButton, eastButton, westButton;
 
@@ -317,18 +319,29 @@ void loop_dropOrRaiseClaw()
     bool upButton = get_switch_state(CLAW_UP_BTN);
     bool downButton = get_switch_state(CLAW_DOWN_BTN);
 
+    z_motor_direction_t z_motor_direction = Z_MOTOR_DIRECTION_STOP;
+
+    if (upButton && downButton) {
+        // Serial.println("INFO: Both up and down buttons pressed.");
+        z_motor_direction = Z_MOTOR_DIRECTION_STOP;
+    }
     if (upButton) {
-        // Serial.println("Moving claw up");
-        set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
+        // Serial.println("INFO: Moving claw up");
+        z_motor_direction = Z_MOTOR_DIRECTION_RAISE;
     }
     else if (downButton) {
-        // Serial.println("Moving claw down");
-        set_z_motor_state(Z_MOTOR_DIRECTION_DROP);
+        // Serial.println("INFO: Moving claw down");
+        z_motor_direction = Z_MOTOR_DIRECTION_DROP;
     }
-    else {
-        // Serial.println("Stopping claw");
+    set_z_motor_state(z_motor_direction);
+
+    // special case to make the claw stop better, when it transitions from down to stop
+    if (z_motor_direction == Z_MOTOR_DIRECTION_STOP && prev_z_motor_direction == Z_MOTOR_DIRECTION_DROP) {
+        set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
+        delay(40);
         set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
     }
+    prev_z_motor_direction = z_motor_direction;
 
     // do claw
     if (get_switch_state(CLAW_GRAB_BTN)) {
