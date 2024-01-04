@@ -32,6 +32,7 @@ void set_z_motor_state(z_motor_direction_t direction) {
         z_axis_net_duration_down_ms += net_dir_down_ms;
     }
     last_z_motor_direction_update_time_ms = millis();
+    // FIXME: might need to set a delay here, because it appears that without Serial logging, the claw hits the upper (dropped) limit too early
 
     #ifdef DEBUG_CLAW
     Serial.print("DEBUG: z_axis_net_duration_down_ms=");
