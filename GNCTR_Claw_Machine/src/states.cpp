@@ -32,6 +32,25 @@ game_state_t idle_state(game_state_t prev)
         start_btn_led_last_toggle_time_ms = millis();
     }
 
+    // set the motors idle
+    set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
+    set_stepper_enable(0);
+    
+    // do a semi-sentient "clip-clip" with the claw like a crab
+    uint32_t millis_mod_10sec = millis() % 10000;
+    if (millis_mod_10sec < 200) {
+        set_claw_state(CLAW_ENGAGE);
+    }
+    else if (millis_mod_10sec < 400) {
+        set_claw_state(CLAW_RELEASE);
+    }
+    else if (millis_mod_10sec < 600) {
+        set_claw_state(CLAW_ENGAGE);
+    }
+    else {
+        set_claw_state(CLAW_RELEASE);
+    }
+
     // next-state logic
     if (get_switch_state(START_BTN)) {
         return GAME_STATE_PLAY;
@@ -46,6 +65,7 @@ game_state_t play_state(game_state_t prev)
     if (prev != GAME_STATE_PLAY) {
         Serial.println("Starting GAME_STATE_PLAY state");
         set_start_button_led(false);
+        set_stepper_enable(1);
     }
     else {
         Serial.println("Continuing GAME_STATE_PLAY state (should not happen)");
@@ -113,7 +133,7 @@ game_state_t reset_state(game_state_t prev)
     set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
 
     // move claw over bin in front
-    // TODO: implement this
+    // TODO: implement movement over bin in front at endgame
     set_claw_state(CLAW_RELEASE);
 
     delay(1000); // wait a sec showing that it's over

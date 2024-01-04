@@ -443,3 +443,16 @@ void display_scrolling_press_start(uint32_t idle_start_time_ms) {
 
     display.displayRaw(seg1_data);
 }
+
+void set_stepper_enable(bool enable) {
+    if (enable) {
+        x1Stepper.enableOutputs();
+        x2Stepper.enableOutputs();
+        yStepper.enableOutputs();
+    }
+    else {
+        x1Stepper.disableOutputs();
+        x2Stepper.disableOutputs();
+        yStepper.disableOutputs();
+    }
+}

@@ -67,6 +67,7 @@ void display_blinking_zeros();
 void display_scrolling_press_start(uint32_t idle_start_time_ms);
 void display_int(uint16_t int_val);
 
+void set_stepper_enable(bool enable);
 
 #define SEG_A   0b00000001
 #define SEG_B   0b00000010
