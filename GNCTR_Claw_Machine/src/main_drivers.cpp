@@ -343,12 +343,13 @@ void loop_dropOrRaiseClaw()
         // Serial.println("INFO: Both up and down buttons pressed.");
         z_motor_direction = Z_MOTOR_DIRECTION_STOP;
     }
-    if (upButton) {
+    else if (upButton) {
         // Serial.println("INFO: Moving claw up");
         z_motor_direction = Z_MOTOR_DIRECTION_RAISE;
     }
     else if (downButton) {
         // Serial.println("INFO: Moving claw down");
+        // TODO: add a maximum net duration that the claw can move down for
         z_motor_direction = Z_MOTOR_DIRECTION_DROP;
     }
     set_z_motor_state(z_motor_direction);

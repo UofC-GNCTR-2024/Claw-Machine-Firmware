@@ -47,6 +47,12 @@ game_state_t idle_state(game_state_t prev)
     else if (millis_mod_10sec < 600) {
         set_claw_state(CLAW_ENGAGE);
     }
+    else if (millis_mod_10sec < 800) {
+        set_claw_state(CLAW_RELEASE);
+    }
+    else if (millis_mod_10sec < 1000) {
+        set_claw_state(CLAW_ENGAGE);
+    }
     else {
         set_claw_state(CLAW_RELEASE);
     }
@@ -128,9 +134,12 @@ game_state_t reset_state(game_state_t prev)
     set_claw_state(CLAW_ENGAGE);
     set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
 
-    // wait for claw to raise all the way
+    // wait for claw to raise all the way, and then drop it a touch
     delay(5000);
+    set_z_motor_state(Z_MOTOR_DIRECTION_DROP);
+    delay(50);
     set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
+
 
     // move claw over bin in front
     // TODO: implement movement over bin in front at endgame
