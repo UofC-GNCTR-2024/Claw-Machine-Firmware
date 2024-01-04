@@ -89,14 +89,6 @@ game_state_t play_state(game_state_t prev)
     // TODO: early exit if the claw is dropped over the target
 
     Serial.println("INFO: game over");
-
-    // set known state
-    set_start_button_led(false);
-    set_claw_state(CLAW_RELEASE);
-    set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
-
-    display_blinking_zeros();
-    delay(2000); // wait a sec showing that it's over
     
     return GAME_STATE_RESET;
 }
@@ -106,15 +98,25 @@ game_state_t reset_state(game_state_t prev)
 {
     if (prev != GAME_STATE_RESET) {
         Serial.println("Starting GAME_STATE_RESET state");
-        ; // TODO screen message
     }
 
-    // TODO "game over" message
-    // TODO release the claw
+    display_blinking_zeros();
+    // TODO: "game over" message, maybe
 
-    // Use blocking functions here?
-    // TODO raise the claw
-    // TODO return the claw to the home position
+    // set known state
+    set_start_button_led(false);
+    set_claw_state(CLAW_ENGAGE);
+    set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
+
+    // wait for claw to raise all the way
+    delay(5000);
+    set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
+
+    // move claw over bin in front
+    // TODO: implement this
+    set_claw_state(CLAW_RELEASE);
+
+    delay(1000); // wait a sec showing that it's over
 
     return GAME_STATE_IDLE;
 }
