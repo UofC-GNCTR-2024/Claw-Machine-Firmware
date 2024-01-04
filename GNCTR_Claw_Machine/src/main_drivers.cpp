@@ -2,9 +2,13 @@
 #include "main.h"
 #include <AccelStepper.h>
 #include <MultiStepper.h>
+#include "I2CScanner.h"
+#include <HT16K33.h>
 
 AccelStepper x1Stepper, x2Stepper, yStepper;
 MultiStepper xSteppers;
+
+HT16K33 display(I2C_SCREEN_ADDR);
 
 const float stepper_speed = STEPPER_MICROSTEPS * 8000;
 const long stepperMinPos = -80000;
@@ -71,6 +75,22 @@ void init_pin_modes()
     pinMode(PIN_GENERAL_PWR_EN_2, OUTPUT);
     pinMode(PIN_GENERAL_PWR_EN_3, OUTPUT);
     pinMode(PIN_CLAW_EN, OUTPUT);
+}
+
+void init_display() {
+    // Guide: https://registry.platformio.org/libraries/robtillaart/HT16K33/examples/demo_displayInt/demo_displayInt.ino
+    
+    Wire.begin();
+    Wire.setClock(100000);
+    display.begin();
+
+    display.displayOn();
+    display.setBrightness(0x0F); // 0x00 to 0x0F
+    display.displayClear();
+    display.setBlink(0);
+
+    display.setDigits(4); // 4 leading zeros, I think
+    display.displayInt(0);
 }
 
 void set_claw_state(claw_mode_t state)
@@ -351,4 +371,13 @@ void loop_dropOrRaiseClaw()
         set_claw_state(CLAW_RELEASE);
     }
 
+}
+
+void i2c_scan() {
+    Serial.println("INFO: I2C scan starting...");
+    I2CScanner scanner;
+
+	scanner.Init();
+	scanner.Scan();
+    Serial.println("INFO: I2C scan complete.");
 }

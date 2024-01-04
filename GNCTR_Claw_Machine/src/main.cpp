@@ -10,6 +10,11 @@ void setup()
     Serial.println("DEBUG: Start of setup() ===============================");
     init_pin_modes();
     init_steppers();
+    init_display();
+
+    i2c_scan();
+
+    Serial.println("DEBUG: End of setup() ===============================");
 }
 
 void loop()

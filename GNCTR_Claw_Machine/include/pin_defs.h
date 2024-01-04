@@ -51,4 +51,6 @@
 #define PIN_GENERAL_PWR_EN_3 50 // flashing start button LED
 #define PIN_CLAW_EN PIN_GENERAL_PWR_EN_0
 
+#define I2C_SCREEN_ADDR 0x71 // found by scanner
+
 #endif // __INCLUDE_GUARD_PIN_DEFS_H_CLAW_MACHINE__

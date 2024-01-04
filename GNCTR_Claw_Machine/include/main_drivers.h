@@ -36,7 +36,8 @@ typedef enum {
 
 
 void init_pin_modes();
-
+void init_steppers();
+void init_display();
 
 /* True=Enable/Grab, False=Disable/Release. */
 void set_claw_state(claw_mode_t state);
@@ -54,10 +55,10 @@ void debug_print_all_limit_switch_states(bool verbose);
 
 AccelStepper& init_stepper(AccelStepper &stepper, uint8_t enablePin, uint8_t stepPin, uint8_t dirPin, bool reverse);
 
-void init_steppers();
 
 void loop_moveMotorsBasedOnButtons();
 void loop_dropOrRaiseClaw();
 
+void i2c_scan();
 
 #endif // __INCLUDE_GUARD_MAIN_DRIVERS_H_CLAW_MACHINE__
