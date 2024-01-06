@@ -380,6 +380,15 @@ void home_y_axis() {
     Serial.println("INFO: Y axis homed.");
 }
 
+void home_z_motor(uint16_t max_up_duration_ms) {
+    // wait for claw to raise all the way, and then drop it a touch
+    set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
+    delay(max_up_duration_ms); // TODO: make it only raise a little bit, if it's aware of how far down it is
+    set_z_motor_state(Z_MOTOR_DIRECTION_DROP);
+    delay(50);
+    set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
+}
+
 void endgame_move_to_bin() {
     // moves axes over the bin; blocking
     // also zeros the Y axis
@@ -409,9 +418,7 @@ void endgame_move_to_bin() {
     delay(500);
 
     // move the claw back up
-    set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
-    delay(500);
-    set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
+    home_z_motor(2000);
 
     // move to middle
     move_claw_to_absolute_xy(xAxisLength/2, yAxisLength/2);
@@ -581,7 +588,7 @@ void display_duration_ms(uint32_t duration_ms) {
 }
 
 void display_blinking_zeros() {
-    display.displayColon(0);
+    display.displayColon(1);
     display.displayInt(0);
     display.setBlink(1);
 }

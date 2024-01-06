@@ -2,7 +2,7 @@
 #include "main_drivers.h"
 
 uint16_t start_btn_led_blink_rate_ms = 400; // half-period
-uint16_t game_play_max_time_sec = 10; // FIXME: set to 45 for deployment
+uint16_t game_play_max_time_sec = 45; // FIXME: set to 45 for deployment
 
 // persistent vars for GAME_STATE_IDLE
 bool start_btn_led_state = false;
@@ -40,6 +40,7 @@ game_state_t homing_state(game_state_t prev)
     display_raw_message(seg_zero_message_for_display);
 
     Serial.println("Starting xy-axis homing because it's past the start button waiting.");
+    home_z_motor(3000);
     home_x_axis();
     home_y_axis();
 
@@ -124,11 +125,18 @@ game_state_t play_state(game_state_t prev)
     // }
 
     // do a countdown: 4321 removing the numbers
+    set_enclosure_led(false);
     uint16_t countdown_nums[] = {4321, 321, 21, 1};
     for (uint16_t i = 0; i < 4; i++) {
         display_int_no_leading_zeros(countdown_nums[i]);
-        delay(700);
+        
+        delay(500);
+        set_enclosure_led(true);
+        delay(200);
+        set_enclosure_led(false);
+
     }
+    set_enclosure_led(true);
 
     uint32_t play_state_start_time_ms = millis();
     uint32_t last_play_state_tenthsec = 0;
@@ -176,13 +184,8 @@ game_state_t reset_state(game_state_t prev)
     set_start_button_led(false);
     set_claw_state(CLAW_ENGAGE);
     delay(250); // wait for claw to close before lifting
-    set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
 
-    // wait for claw to raise all the way, and then drop it a touch
-    delay(1000); // TODO: make it only raise a little bit, if it's aware of how far down it is
-    set_z_motor_state(Z_MOTOR_DIRECTION_DROP);
-    delay(50);
-    set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
+    home_z_motor(2000);
 
     // move claw over bin in front
     endgame_move_to_bin();

@@ -64,6 +64,7 @@ void loop_moveMotorsBasedOnButtons();
 void loop_dropOrRaiseClaw();
 void home_x_axis();
 void home_y_axis();
+void home_z_motor(uint16_t max_up_duration_ms);
 void endgame_move_to_bin();
 void move_claw_to_absolute_xy(long x, long y);
 
