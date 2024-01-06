@@ -21,22 +21,26 @@ game_state_t homing_state(game_state_t prev)
         Serial.println("Starting GAME_STATE_HOMING state");
         set_start_button_led(false);
         set_claw_state(CLAW_RELEASE);
-        set_stepper_enable(1);
-
-        // write the homing message to the LCD
-        uint8_t seg_zero_message_for_display[] = {
-            SEG_A | SEG_B | SEG_G | SEG_E | SEG_D,  // Z
-            SEG_A | SEG_F | SEG_E | SEG_G | SEG_D,  // E
-            SEG_E | SEG_G,                          // r
-            // SEG_A | SEG_B | SEG_C | SEG_D | SEG_E | SEG_F, // 0
-            SEG_C | SEG_D | SEG_E | SEG_G, // 0
-        };
-
-        display_int(0); // hmm
-        display_raw_message(seg_zero_message_for_display);
     }
     
-    loop_homing();
+    Serial.println("Press the start button to do the x-axis homing.");
+    while (!get_switch_state(START_BTN)) {
+        delay(25); // lol save power
+    }
+
+    // write the homing message to the LCD
+    uint8_t seg_zero_message_for_display[] = {
+        SEG_A | SEG_B | SEG_G | SEG_E | SEG_D,  // Z
+        SEG_A | SEG_F | SEG_E | SEG_G | SEG_D,  // E
+        SEG_E | SEG_G,                          // r
+        // SEG_A | SEG_B | SEG_C | SEG_D | SEG_E | SEG_F, // 0
+        SEG_C | SEG_D | SEG_E | SEG_G, // 0
+    };
+    //display_int(0); // hmm
+    display_raw_message(seg_zero_message_for_display);
+
+    Serial.println("Starting x-axis homing because it's past the start button waiting.");
+    home_x_axis();
 
     return GAME_STATE_IDLE;
 }

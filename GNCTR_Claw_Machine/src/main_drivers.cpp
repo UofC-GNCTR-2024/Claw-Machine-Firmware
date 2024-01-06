@@ -299,10 +299,16 @@ void init_steppers()
     xSteppers = MultiStepper();
     xSteppers.addStepper(x1Stepper);
     xSteppers.addStepper(x2Stepper);
+
+    // disable on boot
+    set_stepper_enable(false);
 }
 
-void loop_homing()
+void home_x_axis()
 {
+    Serial.println("INFO: Starting home_x_axis()");
+    set_stepper_enable(1);
+
     // move the claw to the left until it hits the limit switch
     x1Stepper.setSpeed(stepper_speed);
     x2Stepper.setSpeed(stepper_speed);
@@ -326,6 +332,12 @@ void loop_homing()
     stepperMinMulti[1] = xStepperMinPosAfterZeroing;
     stepperMaxMulti[0] = xStepperMaxPosAfterZeroing;
     stepperMaxMulti[1] = xStepperMaxPosAfterZeroing;
+
+    // for beauty, move back a bit from the limit
+    delay(150);
+    long xPos[] = {-1500, -1500}; // 1500 is about a cm
+    xSteppers.moveTo(xPos);
+    xSteppers.runSpeedToPosition();
 
     xZeroed = true;
     Serial.println("INFO: X axis homed.");
