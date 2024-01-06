@@ -84,7 +84,6 @@ game_state_t play_state(game_state_t prev)
         display_int(i);
         delay(600);
     }
-    set_start_button_led(true);
 
     uint32_t play_state_start_time_ms = millis();
     uint32_t last_play_state_tenthsec = 0;

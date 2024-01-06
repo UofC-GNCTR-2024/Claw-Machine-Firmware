@@ -112,9 +112,11 @@ void toggle_claw_state()
 {
     if (clawState == CLAW_RELEASE) {
         set_claw_state(CLAW_ENGAGE);
+        set_start_button_led(true);
     }
     else {
         set_claw_state(CLAW_RELEASE);
+        set_start_button_led(false);
     }
 }
 
