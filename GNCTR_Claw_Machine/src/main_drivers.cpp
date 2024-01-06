@@ -26,7 +26,7 @@ bool currentlyTogglingClaw = false;
 claw_mode_t clawState = CLAW_RELEASE;
 
 // either -1 or +1 to indicate the previous direction in each axis
-int prevXdir = 0, prevYdir = 0;
+int8_t prevXdir = 0, prevYdir = 0;
 
 z_motor_direction_t prev_z_motor_direction = Z_MOTOR_DIRECTION_STOP;
 
@@ -442,63 +442,62 @@ void loop_moveMotorsBasedOnButtons()
     bool eastButton  = get_switch_state(STICK_EAST);
     bool westButton  = get_switch_state(STICK_WEST);
 
-    //long xxyNewPos[] = {x1Stepper.currentPosition(), x2Stepper.currentPosition(), yStepper.currentPosition()};
-    long xxyNewPos[] = {0,0,0}; // placeholders
-    
-    // Positive X direction
+    int8_t xDir = 0, yDir = 0;
+    long newXPos, newYPos;
+
+    // if no buttons pressed, early exit
+    if (!northButton && !southButton && !eastButton && !westButton) {
+        return;
+    }
+
+    // populate xDir
     if (northButton) {
-        if (prevXdir != 1) {  // direction change
-            Serial.println("Moving claw North");
-            prevXdir = 1;
-        }
-
-        xxyNewPos[0] = xAxisLength;
-        xxyNewPos[1] = xAxisLength;
+        xDir = 1;
+        newXPos = xAxisLength;
     }
-    // Negative X direction
     else if (southButton) {
-        if (prevXdir != -1) {  // direction change
-            Serial.println("Moving claw South");
-            prevXdir = -1;
-        }
-
-        xxyNewPos[0] = 0;
-        xxyNewPos[1] = 0;
+        xDir = -1;
+        newXPos = 0;
     }
     else {
-        xxyNewPos[0] = x1Stepper.currentPosition();
-        xxyNewPos[1] = x2Stepper.currentPosition();
+        xDir = 0;
+        newXPos = x1Stepper.currentPosition();
     }
 
-    // Positive Y direction
+    // populate yDir
     if (eastButton) {
-        if (prevYdir != 1) {  // direction change
-            Serial.println("Moving claw East");
-            prevYdir = 1;
-        }
-        xxyNewPos[2] = yAxisLength;
+        yDir = 1;
+        newYPos = yAxisLength;
     }
-    // Negative Y direction
-    else if (westButton == HIGH) {
-        if (prevYdir != -1) {  // direction change
-            Serial.println("Moving claw West");
-            prevYdir = -1;
-        }
-        xxyNewPos[2] = 0;
+    else if (westButton) {
+        yDir = -1;
+        newYPos = 0;
     }
     else {
-        xxyNewPos[2] = yStepper.currentPosition();
+        yDir = 0;
+        newYPos = yStepper.currentPosition();
     }
 
-    if (northButton || southButton || eastButton || westButton) {
-        // drive the stepper
+    // if there's a direction change this time at all
+    if (prevXdir != xDir || prevYdir != yDir) {
+        Serial.print("DEBUG: Claw direction change. xDir=");
+        Serial.print(xDir);
+        Serial.print(", yDir=");
+        Serial.print(yDir);
+        Serial.println();
+        prevXdir = xDir;
+        prevYdir = yDir;
+
+        // update the target places
+        long xxyNewPos[] = {newXPos, newXPos, newYPos}; // placeholders
         xxySteppers.moveTo(xxyNewPos);
-
-        // run the stepper, to the new position
-        for (uint16_t i = 0; i < 1000; i++) { // 1000 is arbitrary
-            xxySteppers.run();
-        }
     }
+
+    // run the steppers
+    for (uint16_t i = 0; i < 1000; i++) {
+        xxySteppers.run();
+    }
+    // xxySteppers.run();
 }
 
 void loop_dropOrRaiseClaw()
