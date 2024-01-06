@@ -207,6 +207,53 @@ void set_z_motor_state(z_motor_direction_t direction)
     }
 }
 
+bool run_z_motor_for_duration_and_watch_start(z_motor_direction_t direction, uint32_t duration_ms)
+{
+    // runs the z motor for the specified duration, and watches for the start button
+    // does the little brake at the end if lowering
+
+    set_z_motor_state(direction);
+
+    uint32_t start_time = millis();
+    
+    while (millis() - start_time < duration_ms) {
+        if (get_switch_state(START_BTN)) {
+            // Serial.println("DEBUG: Start button pressed during z motor run.");
+
+            if (direction == Z_MOTOR_DIRECTION_DROP) {
+                // do the little brake
+                set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
+                delay(Z_BRAKE_DURATION_MS);
+            }
+            set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
+            set_start_button_led(false);
+            return true;
+        }
+
+        // flash the start button
+        loop_update_start_button_blinking();
+        display_scrolling_press_start();
+
+        delay(20);
+    }
+
+    if (direction == Z_MOTOR_DIRECTION_DROP) {
+        // do the little brake
+        set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
+        delay(Z_BRAKE_DURATION_MS);
+    }
+    set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
+    set_start_button_led(false);
+    return false;
+}
+
+
+void loop_update_start_button_blinking() {
+    // set button blinking
+    bool target_state = (millis() % (start_btn_led_blink_rate_ms * 2) < start_btn_led_blink_rate_ms);
+    set_start_button_led(target_state);
+}
+
 void set_start_button_led(bool state) {
     digitalWrite(PIN_GENERAL_PWR_EN_3, state);
 }
@@ -387,7 +434,7 @@ void home_z_motor(uint16_t max_up_duration_ms) {
     set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
     delay(max_up_duration_ms); // TODO: make it only raise a little bit, if it's aware of how far down it is
     set_z_motor_state(Z_MOTOR_DIRECTION_DROP);
-    delay(50);
+    delay(Z_BRAKE_DURATION_MS);
     set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
 }
 
@@ -411,7 +458,7 @@ void endgame_move_to_bin() {
     set_z_motor_state(Z_MOTOR_DIRECTION_DROP);
     delay(500);
     set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
-    delay(50);
+    delay(Z_BRAKE_DURATION_MS);
     set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
 
 
@@ -455,21 +502,33 @@ bool move_to_absolute_xy_and_watch_for_start_press(long x, long y) {
     xxySteppers.moveTo(xxyPos);
 
     uint32_t last_check_time = millis();
-    while (xxySteppers.run()) {
+    while (1) {
+        bool all_done = false;
+        for (uint16_t i = 0; i < 1000; i++) {
+            if (!xxySteppers.run()) {
+                all_done = true;
+                break;
+            }
+        }
+        if (all_done) {
+            break;
+        }
+
         if (millis() - last_check_time > 100) {
             last_check_time = millis();
             if (get_switch_state(START_BTN)) {
                 return true;
             }
-
-            // set button blinking
-            bool target_state = (millis() % (start_btn_led_blink_rate_ms * 2) < start_btn_led_blink_rate_ms);
-            set_start_button_led(target_state);
         }
+
+        // flash the start button
+        loop_update_start_button_blinking();
+        display_scrolling_press_start();
     }
     set_start_button_led(false);
     return false;
 }
+
 
 void loop_moveMotorsBasedOnButtons()
 {
@@ -644,12 +703,14 @@ void display_raw_message(uint8_t *message) {
     display.displayRaw(message);
 }
 
-void display_scrolling_press_start(uint32_t idle_start_time_ms) {
+void display_scrolling_press_start() {
+    // displays "Press Start" scrolling across the screen
+
     display.setBlink(0);
     display.displayColon(0);
 
     const int msg_len = 14;
-    int offset = ((millis() - idle_start_time_ms) / 500) % (msg_len);
+    int offset = (millis() / start_btn_led_blink_rate_ms) % (msg_len);
 
     const uint8_t SEG_PRESS_START[] = {
         SEG_A | SEG_B | SEG_F | SEG_E | SEG_G,           // P

@@ -56,7 +56,7 @@ game_state_t idle_state(game_state_t prev)
     }
 
     // display scrolling text: "Press Start" (non-blocking)
-    display_scrolling_press_start(idle_start_time_ms);
+    display_scrolling_press_start();
 
     // flash the START_BTN LED
     if (millis() - start_btn_led_last_toggle_time_ms > start_btn_led_blink_rate_ms) {
@@ -100,6 +100,12 @@ game_state_t idle_state(game_state_t prev)
     else if (get_switch_state(CLAW_GRAB_BTN)) { // cheat code to start demo
         return GAME_STATE_DEMO;
     }
+
+    // start the demo if it's been idle for a while
+    if (millis() - idle_start_time_ms > (idle_time_to_start_demo_sec * 1000)) {
+        Serial.println("INFO: Starting demo because it's been idle for a while");
+        return GAME_STATE_DEMO;
+    }
     
     return GAME_STATE_IDLE;
 }
@@ -139,44 +145,44 @@ game_state_t demo_state(game_state_t prev) {
         delay(150);
 
         // move down
-        set_z_motor_state(Z_MOTOR_DIRECTION_DROP);
-        delay(claw_down_dist_ms);
-        set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
-        delay(50);
-        set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
+        if (run_z_motor_for_duration_and_watch_start(Z_MOTOR_DIRECTION_DROP, claw_down_dist_ms)) {
+            finish_demo();
+            return GAME_STATE_PLAY;
+        }
 
         // grab
         set_claw_state(CLAW_ENGAGE);
-        delay(random(100, 800));
+        delay(random(10, 800));
 
         // move up
-        set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
-        delay(claw_down_dist_ms * Z_UP_TO_DOWN_RATIO);
-        set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
+        if (run_z_motor_for_duration_and_watch_start(Z_MOTOR_DIRECTION_RAISE, claw_down_dist_ms * Z_UP_TO_DOWN_RATIO)) {
+            finish_demo();
+            return GAME_STATE_PLAY;
+        }
 
         // move to stash
         if (move_to_absolute_xy_and_watch_for_start_press(xAxisLength*0.9, yAxisLength*0.9)) {
             finish_demo();
             return GAME_STATE_PLAY;
         }
-        delay(150); // FIXME: all these delays need to listen to the start button
+        delay(150);
 
         // move down (bow down to stash)
-        set_z_motor_state(Z_MOTOR_DIRECTION_DROP);
-        delay(500);
-        set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
-        delay(50);
-        set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
+        if (run_z_motor_for_duration_and_watch_start(Z_MOTOR_DIRECTION_DROP, 500)) {
+            finish_demo();
+            return GAME_STATE_PLAY;
+        }
 
         // release to stash
         set_claw_state(CLAW_RELEASE);
         delay(400);
 
         // move back up
-        // set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
-        // delay(500*Z_UP_TO_DOWN_RATIO);
-        // set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
-        home_z_motor(2000);
+        //home_z_motor(2000);
+        if (run_z_motor_for_duration_and_watch_start(Z_MOTOR_DIRECTION_RAISE, 500*Z_UP_TO_DOWN_RATIO)) {
+            finish_demo();
+            return GAME_STATE_PLAY;
+        }
     }
 
     Serial.println("INFO: demo over");

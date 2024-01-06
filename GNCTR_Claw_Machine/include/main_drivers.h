@@ -12,6 +12,7 @@ const long xAxisLength = 46000;
 const long yAxisLength = 50000;
 
 #define Z_UP_TO_DOWN_RATIO 1.25
+#define Z_BRAKE_DURATION_MS 50
 
 typedef enum {
     LIMIT_X1,
@@ -51,9 +52,11 @@ void set_claw_state(claw_mode_t state);
 bool get_switch_state(limit_switch_t limit_switch);
 
 void set_z_motor_state(z_motor_direction_t direction);
+bool run_z_motor_for_duration_and_watch_start(z_motor_direction_t direction, uint32_t duration_ms);
 
 void set_start_button_led(bool state);
 void set_enclosure_led(bool state);
+void loop_update_start_button_blinking();
 
 void debug_print_all_limit_switch_states();
 void debug_print_all_limit_switch_states(bool verbose);
@@ -76,7 +79,7 @@ void i2c_scan();
 void display_duration_sec(uint32_t duration_sec);
 void display_duration_ms(uint32_t duration_ms);
 void display_blinking_zeros();
-void display_scrolling_press_start(uint32_t idle_start_time_ms);
+void display_scrolling_press_start();
 void display_int(uint16_t int_val);
 void display_int_no_leading_zeros(uint16_t int_val);
 void display_raw_message(uint8_t *message);
