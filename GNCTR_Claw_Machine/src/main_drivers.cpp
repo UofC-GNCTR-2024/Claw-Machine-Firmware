@@ -16,6 +16,11 @@ const long stepperMaxPos = 80000;
 long stepperMinMulti[] = {stepperMinPos, stepperMinPos};
 long stepperMaxMulti[] = {stepperMaxPos, stepperMaxPos};
 
+unsigned long prevClawTransTime = 0;
+const unsigned long clawToggleDebounceTime = 150;
+bool currentlyTogglingClaw = false;
+claw_mode_t clawState = CLAW_RELEASE;
+
 // either -1 or +1 to indicate the previous direction in each axis
 int prevXdir = 0, prevYdir = 0;
 
@@ -92,6 +97,7 @@ void init_display() {
 
 void set_claw_state(claw_mode_t state)
 {
+    clawState = state;
     if (state == CLAW_ENGAGE) {
         digitalWrite(PIN_CLAW_EN, HIGH);
         // Serial.println("DEBUG: Claw enabled.");
@@ -99,6 +105,16 @@ void set_claw_state(claw_mode_t state)
     else if (state == CLAW_RELEASE) {
         digitalWrite(PIN_CLAW_EN, LOW);
         // Serial.println("DEBUG: Claw disabled.");
+    }
+}
+
+void toggle_claw_state()
+{
+    if (clawState == CLAW_RELEASE) {
+        set_claw_state(CLAW_ENGAGE);
+    }
+    else {
+        set_claw_state(CLAW_RELEASE);
     }
 }
 
@@ -362,12 +378,23 @@ void loop_dropOrRaiseClaw()
     }
     prev_z_motor_direction = z_motor_direction;
 
-    // do claw
+    // Debounce the claw grab button
     if (get_switch_state(CLAW_GRAB_BTN)) {
-        set_claw_state(CLAW_ENGAGE);
+        // enough time has passed since the last transition
+        
+        if (!currentlyTogglingClaw && millis() >= prevClawTransTime + clawToggleDebounceTime) {
+            // Serial.println("DEBUG: Claw grab button pressed.");
+            currentlyTogglingClaw = true;
+            prevClawTransTime = millis();
+            toggle_claw_state();
+        }
     }
     else {
-        set_claw_state(CLAW_RELEASE);
+        if (currentlyTogglingClaw && millis() >= prevClawTransTime + clawToggleDebounceTime) {
+            // Serial.println("DEBUG: Claw grab button released.");
+            currentlyTogglingClaw = false;
+            prevClawTransTime = millis();
+        }
     }
 
 }
