@@ -8,6 +8,9 @@
 
 #define STEPPER_MICROSTEPS 16.0
 
+const long xAxisLength = 46000;
+const long yAxisLength = 50000;
+
 typedef enum {
     LIMIT_X1,
     LIMIT_X2,
@@ -52,7 +55,7 @@ void set_enclosure_led(bool state);
 
 void debug_print_all_limit_switch_states();
 void debug_print_all_limit_switch_states(bool verbose);
-
+void debug_print_axes_info();
 
 AccelStepper& init_stepper(AccelStepper &stepper, uint8_t enablePin, uint8_t stepPin, uint8_t dirPin, bool reverse);
 
@@ -60,7 +63,9 @@ AccelStepper& init_stepper(AccelStepper &stepper, uint8_t enablePin, uint8_t ste
 void loop_moveMotorsBasedOnButtons();
 void loop_dropOrRaiseClaw();
 void home_x_axis();
+void home_y_axis();
 void endgame_move_to_bin();
+void move_claw_to_absolute_xy(long x, long y);
 
 void i2c_scan();
 

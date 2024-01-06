@@ -39,8 +39,13 @@ game_state_t homing_state(game_state_t prev)
     //display_int(0); // hmm
     display_raw_message(seg_zero_message_for_display);
 
-    Serial.println("Starting x-axis homing because it's past the start button waiting.");
+    Serial.println("Starting xy-axis homing because it's past the start button waiting.");
     home_x_axis();
+    home_y_axis();
+
+    Serial.println("INFO: Homing complete. Move to center.");
+    // move to middle
+    move_claw_to_absolute_xy(xAxisLength/2, yAxisLength/2);
 
     return GAME_STATE_IDLE;
 }

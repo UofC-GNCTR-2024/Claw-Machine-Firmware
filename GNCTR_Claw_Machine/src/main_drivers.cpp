@@ -6,24 +6,19 @@
 #include <HT16K33.h>
 
 AccelStepper x1Stepper, x2Stepper, yStepper;
-MultiStepper xSteppers;
+MultiStepper xSteppers, xxySteppers;
 
 HT16K33 display(I2C_SCREEN_ADDR);
 
 const float stepper_speed = STEPPER_MICROSTEPS * 8000;
 
-const long yStepperMinPostAfterZeroing = -45800;
-const long yStepperMaxPostAfterZeroing = 0;
-long yStepperMinPos = -80000;
-long yStepperMaxPos = 80000;
+long yStepperMinPos = -yAxisLength * 1.2; // updated during homing
+long yStepperMaxPos = 80000; // updated during homing
 
 // for X1 and X2, both values should be the same
 // when X1 and X2 are zeroed, min is set to 0
-const long xStepperMinPosAfterZeroing = -45800;
-const long xStepperMaxPosAfterZeroing = 0;
-long stepperMinMulti[] = {-80000, -80000};
-long stepperMaxMulti[] = {80000, 80000};
-bool xZeroed = false, yZeroed = false;
+long stepperMinMulti[] = {-80000, -80000}; // updated during homing
+long xStepperMaxMulti[] = {80000, 80000}; // updated during homing
 
 unsigned long prevClawTransTime = 0;
 const unsigned long clawToggleDebounceTime = 150;
@@ -128,13 +123,26 @@ void toggle_claw_state()
         set_start_button_led(false);
     }
 
+    debug_print_axes_info();
+}
+
+void debug_print_axes_info() {
     // debug print the current stepper positions (useful for configuring the limits/homing)
     Serial.print("DEBUG: x1Stepper=");
     Serial.print(x1Stepper.currentPosition());
     Serial.print(", x2Stepper=");
     Serial.print(x2Stepper.currentPosition());
     Serial.print(", yStepper=");
-    Serial.println(yStepper.currentPosition());
+    Serial.print(yStepper.currentPosition());
+    Serial.print(", xMin=");
+    Serial.print(stepperMinMulti[0]);
+    Serial.print(", xMax=");
+    Serial.print(xStepperMaxMulti[0]);
+    Serial.print(", yMin=");
+    Serial.print(yStepperMinPos);
+    Serial.print(", yMax=");
+    Serial.print(yStepperMaxPos);
+    Serial.println();
 }
 
 /* True=Triggered, False=Not Triggered. */
@@ -310,6 +318,11 @@ void init_steppers()
     xSteppers.addStepper(x1Stepper);
     xSteppers.addStepper(x2Stepper);
 
+    xxySteppers = MultiStepper();
+    xxySteppers.addStepper(x1Stepper);
+    xxySteppers.addStepper(x2Stepper);
+    xxySteppers.addStepper(yStepper);
+
     // disable on boot
     set_stepper_enable(false);
 }
@@ -325,30 +338,46 @@ void home_x_axis()
         x2Stepper.runSpeed();
     }
 
-    x1Stepper.setCurrentPosition(0);
-    x2Stepper.setCurrentPosition(0);
-    // while (!get_switch_state(LIMIT_X1) || !get_switch_state(LIMIT_X2)) {
-    //     if (!get_switch_state(LIMIT_X1)) {
-    //         x1Stepper.runSpeed();
-    //     }
-    //     if (!get_switch_state(LIMIT_X2)) {
-    //         x2Stepper.runSpeed();
-    //     }
-    // }
+    x1Stepper.setCurrentPosition(xAxisLength);
+    x2Stepper.setCurrentPosition(xAxisLength);
+    
     // set the limits
-    stepperMinMulti[0] = xStepperMinPosAfterZeroing;
-    stepperMinMulti[1] = xStepperMinPosAfterZeroing;
-    stepperMaxMulti[0] = xStepperMaxPosAfterZeroing;
-    stepperMaxMulti[1] = xStepperMaxPosAfterZeroing;
+    stepperMinMulti[0] = 0;
+    stepperMinMulti[1] = 0;
+    xStepperMaxMulti[0] = xAxisLength;
+    xStepperMaxMulti[1] = xAxisLength;
 
     // for beauty, move back a bit from the limit
     delay(150);
-    long xPos[] = {-1500, -1500}; // 1500 is about a cm
+    long xPos[] = {xAxisLength-1500, xAxisLength-1500}; // 1500 is about a cm
     xSteppers.moveTo(xPos);
     xSteppers.runSpeedToPosition();
 
-    xZeroed = true;
     Serial.println("INFO: X axis homed.");
+}
+
+void home_y_axis() {
+    Serial.println("INFO: Starting home_y_axis()");
+    set_stepper_enable(1);
+
+    // move the claw to the left for a while (relative-ish move)
+    yStepper.setCurrentPosition(0);
+    yStepper.moveTo(-yAxisLength * 1.2);
+    yStepper.setSpeed(-stepper_speed);
+    while (yStepper.runSpeedToPosition());
+
+    yStepper.setCurrentPosition(0);
+    // set the limits
+    yStepperMinPos = 0;
+    yStepperMaxPos = yAxisLength;
+
+    // for beauty, move back a bit from the limit
+    delay(150);
+    yStepper.moveTo(1500);
+    yStepper.setSpeed(stepper_speed);
+    while (yStepper.runSpeedToPosition());
+
+    Serial.println("INFO: Y axis homed.");
 }
 
 void endgame_move_to_bin() {
@@ -357,41 +386,52 @@ void endgame_move_to_bin() {
 
     Serial.println("INFO: Starting endgame_move_to_bin()");
 
-    // move the claw to the front (neg X)
-    xSteppers.moveTo(stepperMinMulti);
-    xSteppers.runSpeedToPosition();
-    delay(150);
+    // must run after each full game
+    prevXdir = 0;
+    prevYdir = 0;
 
-    // move the claw to the left all the way (it'll jam, but that's fine)
-    yStepper.moveTo(yStepperMinPos);
-    yStepper.runSpeedToPosition();
+    // move the claw to the bin
+    debug_print_axes_info();
+    move_claw_to_absolute_xy(0, 0);
 
-    // the Y axis is now zeroed
-    yStepper.setCurrentPosition(0);
-    yZeroed = true;
-
-
-    delay(150);
+    delay(400);
 
     // drop the claw a touch for fun
     set_z_motor_state(Z_MOTOR_DIRECTION_DROP);
     delay(500);
+    set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
+    delay(50);
     set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
+
 
     // release the claw
     set_claw_state(CLAW_RELEASE);
+    delay(500);
 
-    // move to the middle of the bin
-    long xPos[] = {-22000, -22000};
-    xSteppers.moveTo(xPos);
-    yStepper.moveTo(-22000);
-    while (1) {
-        xSteppers.runSpeedToPosition();
-        yStepper.runSpeedToPosition();
-        if (x1Stepper.distanceToGo() <= 0 && yStepper.distanceToGo() <= 0) {
-            break;
-        }
-    }
+    // move the claw back up
+    set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
+    delay(500);
+    set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
+
+    // move to middle
+    move_claw_to_absolute_xy(xAxisLength/2, yAxisLength/2);
+}
+
+void move_claw_to_absolute_xy(long x, long y) {
+    // moves the claw to the specified x and y positions
+    // blocking
+    // system should be homed
+
+    Serial.print("DBEUG: move_claw_to_absolute_xy(x=");
+    Serial.print(x);
+    Serial.print(", y=");
+    Serial.print(y);
+    Serial.println(")");
+
+    long xxyPos[] = {x, x, y};
+    xxySteppers.moveTo(xxyPos);
+    xxySteppers.runSpeedToPosition();
+
 }
 
 void loop_moveMotorsBasedOnButtons()
@@ -402,26 +442,14 @@ void loop_moveMotorsBasedOnButtons()
     bool eastButton  = get_switch_state(STICK_EAST);
     bool westButton  = get_switch_state(STICK_WEST);
 
-    // If it bumps the limit switch, zero the axis
-    // Not needed because the limit switches are only used for homing and are not an axis limit during regular ops
-    // bool xlimit = get_switch_state(LIMIT_X1) || get_switch_state(LIMIT_X2);
-    // if (xlimit && !xZeroed && prevXdir != -1) {
-    //     x1Stepper.setCurrentPosition(0);
-    //     x2Stepper.setCurrentPosition(0);
-    //     Serial.println("X limit reached, zeroing");
-    //     xZeroed = true;
-    // }
-    
     // Positive X direction
     if (northButton) {
         if (prevXdir != 1) {  // direction change
             Serial.println("Moving claw North");
             prevXdir = 1;
-            // x1Stepper.moveTo(yStepperMaxPos);
-            xSteppers.moveTo(stepperMaxMulti);
+            xSteppers.moveTo(xStepperMaxMulti);
         }
         xSteppers.run();
-        xZeroed = false;
         // x1Stepper.runSpeedToPosition();
         // xSteppers.runSpeedToPosition();
     }
@@ -433,7 +461,6 @@ void loop_moveMotorsBasedOnButtons()
             xSteppers.moveTo(stepperMinMulti);
         }
         xSteppers.run();
-        xZeroed = false;
         // xSteppers.runSpeedToPosition();
     }
 
