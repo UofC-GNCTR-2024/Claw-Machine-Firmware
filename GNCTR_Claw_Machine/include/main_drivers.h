@@ -74,6 +74,8 @@ void endgame_move_to_bin();
 void move_claw_to_absolute_xy(long x, long y);
 bool move_to_absolute_xy_and_watch_for_start_press(long x, long y);
 
+void run_homing_showoff();
+
 void i2c_scan();
 
 void display_duration_sec(uint32_t duration_sec);

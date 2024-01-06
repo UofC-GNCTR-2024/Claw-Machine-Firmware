@@ -2,8 +2,6 @@
 #include "main_drivers.h"
 
 // persistent vars for GAME_STATE_IDLE
-bool start_btn_led_state = false;
-uint32_t start_btn_led_last_toggle_time_ms = 0;
 uint32_t idle_start_time_ms = 0;
 
 // persistent vars for GAME_STATE_PLAY
@@ -59,11 +57,7 @@ game_state_t idle_state(game_state_t prev)
     display_scrolling_press_start();
 
     // flash the START_BTN LED
-    if (millis() - start_btn_led_last_toggle_time_ms > start_btn_led_blink_rate_ms) {
-        start_btn_led_state = !start_btn_led_state;
-        set_start_button_led(start_btn_led_state);
-        start_btn_led_last_toggle_time_ms = millis();
-    }
+    loop_update_start_button_blinking();
 
     // set the motors idle
     set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
@@ -206,6 +200,11 @@ game_state_t play_state(game_state_t prev)
     }
 
     set_start_button_led(false);
+
+    if (approx_homing_showoff_chance > 0 && (millis() % approx_homing_showoff_chance) == 0) {
+        Serial.println("INFO: doing homing showoff, by random chance");
+        run_homing_showoff();
+    }
 
     // do a countdown (4444, 3333, 2222, 1111) [LAME]
     // for (uint16_t i = 3333; i >= 1111; i -= 1111) {

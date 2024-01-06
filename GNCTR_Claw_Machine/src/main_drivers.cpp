@@ -243,7 +243,7 @@ bool run_z_motor_for_duration_and_watch_start(z_motor_direction_t direction, uin
         delay(Z_BRAKE_DURATION_MS);
     }
     set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
-    set_start_button_led(false);
+    // set_start_button_led(false);
     return false;
 }
 
@@ -381,6 +381,10 @@ void home_x_axis()
     Serial.println("INFO: Starting home_x_axis()");
     set_stepper_enable(1);
 
+    // set direction as positive
+    x1Stepper.setSpeed(stepper_speed);
+    x2Stepper.setSpeed(stepper_speed);
+
     // move the claw to the left until it hits the limit switch
     while (!get_switch_state(LIMIT_X1) && !get_switch_state(LIMIT_X2)) {
         x1Stepper.runSpeed();
@@ -478,7 +482,7 @@ void move_claw_to_absolute_xy(long x, long y) {
     // blocking
     // system should be homed
 
-    Serial.print("DBEUG: move_claw_to_absolute_xy(x=");
+    Serial.print("DEBUG: move_claw_to_absolute_xy(x=");
     Serial.print(x);
     Serial.print(", y=");
     Serial.print(y);
@@ -487,7 +491,6 @@ void move_claw_to_absolute_xy(long x, long y) {
     long xxyPos[] = {x, x, y};
     xxySteppers.moveTo(xxyPos);
     xxySteppers.runSpeedToPosition();
-
 }
 
 bool move_to_absolute_xy_and_watch_for_start_press(long x, long y) {
@@ -517,6 +520,7 @@ bool move_to_absolute_xy_and_watch_for_start_press(long x, long y) {
         if (millis() - last_check_time > 100) {
             last_check_time = millis();
             if (get_switch_state(START_BTN)) {
+                set_start_button_led(false);
                 return true;
             }
         }
@@ -525,10 +529,39 @@ bool move_to_absolute_xy_and_watch_for_start_press(long x, long y) {
         loop_update_start_button_blinking();
         display_scrolling_press_start();
     }
-    set_start_button_led(false);
+    // set_start_button_led(false);
     return false;
 }
 
+void run_homing_showoff() {
+    // pointless thing because it's only 8am and Aleks is still an hour away
+
+    move_claw_to_absolute_xy(xAxisLength*0.8, yAxisLength*0.5);
+
+    home_x_axis();
+
+    // move_claw_to_absolute_xy(xAxisLength*0.4, 0);
+    // move_claw_to_absolute_xy(xAxisLength*0.6, 0);
+    // move_claw_to_absolute_xy(xAxisLength*0.4, 0);
+    // move_claw_to_absolute_xy(xAxisLength*0.6, 0);
+
+    // grab
+    set_claw_state(CLAW_ENGAGE);
+    delay(250);
+    set_claw_state(CLAW_RELEASE);
+
+}
+
+void easter_egg_gnctr_theme() {
+    // G-N-CTR, GNCTR
+
+    #define MELODY_Z 0x10
+    #define MELODY_REST 0x20
+
+    // uint8_t melody[] = {
+    //     MELODY_Z | 2,
+    //     MELODY_REST |
+}
 
 void loop_moveMotorsBasedOnButtons()
 {
