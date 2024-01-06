@@ -36,11 +36,17 @@ void loop()
         case GAME_STATE_IDLE:
             game_state = idle_state(prev_game_state);
             break;
+        case GAME_STATE_DEMO:
+            game_state = demo_state(prev_game_state);
+            break;
         case GAME_STATE_PLAY:
             game_state = play_state(prev_game_state);
             break;
         case GAME_STATE_RESET:
             game_state = reset_state(prev_game_state);
+            break;
+        default:
+            Serial.println("ERROR: Invalid game state");
             break;
     }
     prev_game_state = game_state_at_start_of_loop;

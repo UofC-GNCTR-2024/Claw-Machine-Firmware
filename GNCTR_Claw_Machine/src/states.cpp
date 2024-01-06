@@ -1,9 +1,6 @@
 #include "states.h"
 #include "main_drivers.h"
 
-uint16_t start_btn_led_blink_rate_ms = 400; // half-period
-uint16_t game_play_max_time_sec = 45; // FIXME: set to 45 for deployment
-
 // persistent vars for GAME_STATE_IDLE
 bool start_btn_led_state = false;
 uint32_t start_btn_led_last_toggle_time_ms = 0;
@@ -100,6 +97,92 @@ game_state_t idle_state(game_state_t prev)
     if (get_switch_state(START_BTN)) {
         return GAME_STATE_PLAY;
     }
+    else if (get_switch_state(CLAW_GRAB_BTN)) { // cheat code to start demo
+        return GAME_STATE_DEMO;
+    }
+    
+    return GAME_STATE_IDLE;
+}
+
+
+game_state_t demo_state(game_state_t prev) {
+    if (prev != GAME_STATE_DEMO) {
+        Serial.println("Starting GAME_STATE_DEMO state");
+        set_start_button_led(false);
+        set_stepper_enable(1);
+    }
+    else {
+        Serial.println("Continuing GAME_STATE_DEMO state (should not happen)");
+    }
+
+    // assume claw is z-homed
+    // assume claw is in the middle
+    // ensure claw is released
+    set_claw_state(CLAW_RELEASE);
+
+    set_start_button_led(false);
+
+    for (uint8_t i = 0; i < 5; i++) { // number of times to play itself
+        long claw_down_dist_ms = random(2000, 3500);
+
+        Serial.print("INFO: demo iteration ");
+        Serial.print(i);
+        Serial.print(", claw_down_dist_ms = ");
+        Serial.print(claw_down_dist_ms);
+        Serial.println();
+
+        // move to random location
+        if (move_to_absolute_xy_and_watch_for_start_press(random(0, xAxisLength*0.65), random(0, yAxisLength*0.65))) {
+            finish_demo();
+            return GAME_STATE_PLAY;
+        }
+        delay(150);
+
+        // move down
+        set_z_motor_state(Z_MOTOR_DIRECTION_DROP);
+        delay(claw_down_dist_ms);
+        set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
+        delay(50);
+        set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
+
+        // grab
+        set_claw_state(CLAW_ENGAGE);
+        delay(random(100, 800));
+
+        // move up
+        set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
+        delay(claw_down_dist_ms * Z_UP_TO_DOWN_RATIO);
+        set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
+
+        // move to stash
+        if (move_to_absolute_xy_and_watch_for_start_press(xAxisLength*0.9, yAxisLength*0.9)) {
+            finish_demo();
+            return GAME_STATE_PLAY;
+        }
+        delay(150); // FIXME: all these delays need to listen to the start button
+
+        // move down (bow down to stash)
+        set_z_motor_state(Z_MOTOR_DIRECTION_DROP);
+        delay(500);
+        set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
+        delay(50);
+        set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
+
+        // release to stash
+        set_claw_state(CLAW_RELEASE);
+        delay(400);
+
+        // move back up
+        // set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
+        // delay(500*Z_UP_TO_DOWN_RATIO);
+        // set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
+        home_z_motor(2000);
+    }
+
+    Serial.println("INFO: demo over");
+
+    // release claw
+    finish_demo();
     
     return GAME_STATE_IDLE;
 }
@@ -196,3 +279,20 @@ game_state_t reset_state(game_state_t prev)
 
     return GAME_STATE_IDLE;
 }
+
+void finish_demo() {
+    Serial.println("INFO: finish_demo()");
+    
+    // release claw
+    set_claw_state(CLAW_RELEASE);
+
+    // move claw up
+    home_z_motor(2000);
+
+    // move claw to middle
+    move_claw_to_absolute_xy(xAxisLength/2, yAxisLength/2);
+
+    // pause before it starts the countdown to play (in case it's playing next)
+    delay(750);
+}
+

@@ -11,6 +11,8 @@
 const long xAxisLength = 46000;
 const long yAxisLength = 50000;
 
+#define Z_UP_TO_DOWN_RATIO 1.25
+
 typedef enum {
     LIMIT_X1,
     LIMIT_X2,
@@ -67,6 +69,7 @@ void home_y_axis();
 void home_z_motor(uint16_t max_up_duration_ms);
 void endgame_move_to_bin();
 void move_claw_to_absolute_xy(long x, long y);
+bool move_to_absolute_xy_and_watch_for_start_press(long x, long y);
 
 void i2c_scan();
 

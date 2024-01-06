@@ -4,15 +4,17 @@
 #include <MultiStepper.h>
 #include "I2CScanner.h"
 #include <HT16K33.h>
+#include "game_config.h"
 
 AccelStepper x1Stepper, x2Stepper, yStepper;
 MultiStepper xSteppers, xxySteppers;
 
 HT16K33 display(I2C_SCREEN_ADDR);
 
-const float stepper_speed = STEPPER_MICROSTEPS * 8000;
+const float stepper_speed = STEPPER_MICROSTEPS * 16000;
+const float max_stepper_speed = STEPPER_MICROSTEPS * 17000;
 
-long yStepperMinPos = -yAxisLength * 1.2; // updated during homing
+long yStepperMinPos = -yAxisLength; // updated during homing
 long yStepperMaxPos = 80000; // updated during homing
 
 // for X1 and X2, both values should be the same
@@ -295,7 +297,7 @@ AccelStepper& init_stepper(AccelStepper &stepper, uint8_t enablePin, uint8_t ste
     stepper.setEnablePin(enablePin);
     stepper.setPinsInverted(reverse, false, true);  // Invert enable pin because it's active-low
 
-    stepper.setMaxSpeed(STEPPER_MICROSTEPS * 10000);
+    stepper.setMaxSpeed(max_stepper_speed);
     stepper.setAcceleration(STEPPER_MICROSTEPS * 5);
     // stepper.setSpeed(500*16);
     stepper.enableOutputs();
@@ -362,7 +364,7 @@ void home_y_axis() {
 
     // move the claw to the left for a while (relative-ish move)
     yStepper.setCurrentPosition(0);
-    yStepper.moveTo(-yAxisLength * 1.2);
+    yStepper.moveTo(-yAxisLength);
     yStepper.setSpeed(-stepper_speed);
     while (yStepper.runSpeedToPosition());
 
@@ -439,6 +441,34 @@ void move_claw_to_absolute_xy(long x, long y) {
     xxySteppers.moveTo(xxyPos);
     xxySteppers.runSpeedToPosition();
 
+}
+
+bool move_to_absolute_xy_and_watch_for_start_press(long x, long y) {
+    // moves the claw to the specified x and y positions
+    // blocking
+    // system should be homed
+
+    // if start is pressed, returns true
+    // if start is not pressed, returns false
+
+    long xxyPos[] = {x, x, y};
+    xxySteppers.moveTo(xxyPos);
+
+    uint32_t last_check_time = millis();
+    while (xxySteppers.run()) {
+        if (millis() - last_check_time > 100) {
+            last_check_time = millis();
+            if (get_switch_state(START_BTN)) {
+                return true;
+            }
+
+            // set button blinking
+            bool target_state = (millis() % (start_btn_led_blink_rate_ms * 2) < start_btn_led_blink_rate_ms);
+            set_start_button_led(target_state);
+        }
+    }
+    set_start_button_led(false);
+    return false;
 }
 
 void loop_moveMotorsBasedOnButtons()
