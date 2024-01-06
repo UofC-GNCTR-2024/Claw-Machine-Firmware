@@ -68,6 +68,7 @@ void display_duration_ms(uint32_t duration_ms);
 void display_blinking_zeros();
 void display_scrolling_press_start(uint32_t idle_start_time_ms);
 void display_int(uint16_t int_val);
+void display_int_no_leading_zeros(uint16_t int_val);
 void display_raw_message(uint8_t *message);
 
 void set_stepper_enable(bool enable);

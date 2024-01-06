@@ -110,12 +110,19 @@ game_state_t play_state(game_state_t prev)
         Serial.println("Continuing GAME_STATE_PLAY state (should not happen)");
     }
 
-    // do a countdown
-    // TODO: changes this to a 4321 removing the numbers
     set_start_button_led(false);
-    for (uint16_t i = 3333; i >= 1111; i -= 1111) {
-        display_int(i);
-        delay(600);
+
+    // do a countdown (4444, 3333, 2222, 1111) [LAME]
+    // for (uint16_t i = 3333; i >= 1111; i -= 1111) {
+    //     display_int(i);
+    //     delay(600);
+    // }
+
+    // do a countdown: 4321 removing the numbers
+    uint16_t countdown_nums[] = {4321, 321, 21, 1};
+    for (uint16_t i = 0; i < 4; i++) {
+        display_int_no_leading_zeros(countdown_nums[i]);
+        delay(700);
     }
 
     uint32_t play_state_start_time_ms = millis();

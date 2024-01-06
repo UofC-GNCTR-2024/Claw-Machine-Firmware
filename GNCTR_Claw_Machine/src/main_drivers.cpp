@@ -509,6 +509,16 @@ void display_int(uint16_t int_val) {
     display.setBlink(0);
 }
 
+void display_int_no_leading_zeros(uint16_t int_val) {
+    display.displayColon(0);
+    display.setDigits(0);
+    display.displayInt(int_val);
+    display.setBlink(0);
+
+    // reset to "normal"
+    display.setDigits(4); // enable leading zeros for reliability
+}
+
 void display_raw_message(uint8_t *message) {
     // message should be 4 bytes long (array)
     display.displayRaw(message);
