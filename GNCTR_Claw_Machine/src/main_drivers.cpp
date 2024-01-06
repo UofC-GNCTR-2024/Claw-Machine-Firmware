@@ -552,15 +552,70 @@ void run_homing_showoff() {
 
 }
 
-void easter_egg_gnctr_theme() {
+void easter_egg_gnctr_theme()
+{
     // G-N-CTR, GNCTR
 
-    #define MELODY_Z 0x10
-    #define MELODY_REST 0x20
+    #define MELODY_Z '1'
+    #define MELODY_REST '0'
+    
+    Serial.println("INFO: Starting easter_egg_gnctr_theme()");
 
-    // uint8_t melody[] = {
-    //     MELODY_Z | 2,
-    //     MELODY_REST |
+    home_z_motor(3000);
+
+    char melody[] = "X00 x00 1011 0000 1010 1011 0000 x00";
+    for (uint8_t rep = 0; rep < 4; rep++) {
+        for (uint16_t i = 0; i < strlen(melody); i++) {
+            char c = melody[i];
+            if (c == '0') {
+                set_enclosure_led(false);
+                delay(melody_slot_duration);
+            }
+            else if (c == '1') {
+                set_enclosure_led(true);
+                set_z_motor_state(Z_MOTOR_DIRECTION_DROP);
+                delay(melody_tone_duration);
+
+                // brake
+                set_enclosure_led(false);
+                set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
+                delay(Z_BRAKE_DURATION_MS);
+
+                // rest between notes
+                set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
+                int16_t remaining_dur_ms = melody_slot_duration-melody_tone_duration-Z_BRAKE_DURATION_MS;
+                if (remaining_dur_ms > 0) {
+                    delay(remaining_dur_ms);
+                }
+            }
+            else if (c == 'x') { // 2 counts up
+                set_enclosure_led(true);
+
+                set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
+                delay(melody_slot_duration + melody_tone_duration);
+                set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
+
+            }
+            else if (c == 'X') { // 2 counts down
+                set_enclosure_led(true);
+
+                set_z_motor_state(Z_MOTOR_DIRECTION_DROP);
+                delay(melody_slot_duration + melody_tone_duration);
+                set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
+
+            }
+            else if (c == ' ') {
+                ; // ignore, just a separator
+            }
+            else {
+                Serial.print("ERROR: Invalid character in melody: '");
+                Serial.print(c);
+                Serial.println("'");
+            }
+        }
+    }
+
+    home_z_motor(3000);
 }
 
 void loop_moveMotorsBasedOnButtons()

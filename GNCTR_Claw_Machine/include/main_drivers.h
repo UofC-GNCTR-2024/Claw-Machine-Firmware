@@ -75,6 +75,7 @@ void move_claw_to_absolute_xy(long x, long y);
 bool move_to_absolute_xy_and_watch_for_start_press(long x, long y);
 
 void run_homing_showoff();
+void easter_egg_gnctr_theme();
 
 void i2c_scan();
 

@@ -28,7 +28,9 @@ void loop()
     game_state_t game_state_at_start_of_loop = game_state;
     switch (game_state) {
         case GAME_STATE_BOOT:
-            game_state = GAME_STATE_HOMING;
+            // easter_egg_gnctr_theme();  // FIXME move this
+            game_state = GAME_STATE_HOMING; // THIS IS THE MAIN DEPLOYMENT ONE
+            // game_state = GAME_STATE_PLAY; // shortcut for dev
             break;
         case GAME_STATE_HOMING:
             game_state = homing_state(prev_game_state);
@@ -38,6 +40,9 @@ void loop()
             break;
         case GAME_STATE_DEMO:
             game_state = demo_state(prev_game_state);
+            break;
+        case GAME_STATE_GNCTR_EASTER_EGG:
+            game_state = gnctr_easter_egg_state(prev_game_state);
             break;
         case GAME_STATE_PLAY:
             game_state = play_state(prev_game_state);

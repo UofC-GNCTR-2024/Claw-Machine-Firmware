@@ -94,6 +94,9 @@ game_state_t idle_state(game_state_t prev)
     else if (get_switch_state(CLAW_GRAB_BTN)) { // cheat code to start demo
         return GAME_STATE_DEMO;
     }
+    else if (get_switch_state(CLAW_DOWN_BTN)) {
+        return GAME_STATE_GNCTR_EASTER_EGG;
+    }
 
     // start the demo if it's been idle for a while
     if (millis() - idle_start_time_ms > (idle_time_to_start_demo_sec * 1000)) {
@@ -184,6 +187,16 @@ game_state_t demo_state(game_state_t prev) {
     // release claw
     finish_demo();
     
+    return GAME_STATE_IDLE;
+}
+
+game_state_t gnctr_easter_egg_state(game_state_t prev) {
+    Serial.println("Starting GAME_STATE_GNCTR_EASTER_EGG state");
+    
+    // TODO: confirm that location and homing is all good
+
+    easter_egg_gnctr_theme();
+
     return GAME_STATE_IDLE;
 }
 
