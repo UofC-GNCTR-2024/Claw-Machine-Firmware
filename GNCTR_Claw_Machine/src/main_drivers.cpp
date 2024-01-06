@@ -442,26 +442,32 @@ void loop_moveMotorsBasedOnButtons()
     bool eastButton  = get_switch_state(STICK_EAST);
     bool westButton  = get_switch_state(STICK_WEST);
 
+    //long xxyNewPos[] = {x1Stepper.currentPosition(), x2Stepper.currentPosition(), yStepper.currentPosition()};
+    long xxyNewPos[] = {0,0,0}; // placeholders
+    
     // Positive X direction
     if (northButton) {
         if (prevXdir != 1) {  // direction change
             Serial.println("Moving claw North");
             prevXdir = 1;
-            xSteppers.moveTo(xStepperMaxMulti);
         }
-        xSteppers.run();
-        // x1Stepper.runSpeedToPosition();
-        // xSteppers.runSpeedToPosition();
+
+        xxyNewPos[0] = xAxisLength;
+        xxyNewPos[1] = xAxisLength;
     }
     // Negative X direction
     else if (southButton) {
         if (prevXdir != -1) {  // direction change
             Serial.println("Moving claw South");
             prevXdir = -1;
-            xSteppers.moveTo(stepperMinMulti);
         }
-        xSteppers.run();
-        // xSteppers.runSpeedToPosition();
+
+        xxyNewPos[0] = 0;
+        xxyNewPos[1] = 0;
+    }
+    else {
+        xxyNewPos[0] = x1Stepper.currentPosition();
+        xxyNewPos[1] = x2Stepper.currentPosition();
     }
 
     // Positive Y direction
@@ -469,27 +475,30 @@ void loop_moveMotorsBasedOnButtons()
         if (prevYdir != 1) {  // direction change
             Serial.println("Moving claw East");
             prevYdir = 1;
-            yStepper.moveTo(yStepperMaxPos);
-            yStepper.setSpeed(stepper_speed);
         }
-        // yStepper.run();
-        yStepper.runSpeedToPosition();
-        // yStepper.runSpeed();
+        xxyNewPos[2] = yAxisLength;
     }
     // Negative Y direction
     else if (westButton == HIGH) {
         if (prevYdir != -1) {  // direction change
             Serial.println("Moving claw West");
             prevYdir = -1;
-            // yStepper.setSpeed(-stepper_speed);
-            yStepper.moveTo(yStepperMinPos);
-            yStepper.setSpeed(-stepper_speed);
         }
-        // yStepper.run();
-        yStepper.runSpeedToPosition();
-        // yStepper.runSpeed();
+        xxyNewPos[2] = 0;
+    }
+    else {
+        xxyNewPos[2] = yStepper.currentPosition();
     }
 
+    if (northButton || southButton || eastButton || westButton) {
+        // drive the stepper
+        xxySteppers.moveTo(xxyNewPos);
+
+        // run the stepper, to the new position
+        for (uint16_t i = 0; i < 1000; i++) { // 1000 is arbitrary
+            xxySteppers.run();
+        }
+    }
 }
 
 void loop_dropOrRaiseClaw()
