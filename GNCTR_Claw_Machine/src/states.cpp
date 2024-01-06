@@ -2,7 +2,7 @@
 #include "main_drivers.h"
 
 uint16_t start_btn_led_blink_rate_ms = 400; // half-period
-uint16_t game_play_max_time_sec = 30;
+uint16_t game_play_max_time_sec = 10; // FIXME: set to 45 for deployment
 
 // persistent vars for GAME_STATE_IDLE
 bool start_btn_led_state = false;
@@ -174,14 +174,14 @@ game_state_t reset_state(game_state_t prev)
     set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
 
     // wait for claw to raise all the way, and then drop it a touch
-    delay(5000);
+    delay(1000); // TODO: make it only raise a little bit, if it's aware of how far down it is
     set_z_motor_state(Z_MOTOR_DIRECTION_DROP);
     delay(50);
     set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
 
-
     // move claw over bin in front
-    // TODO: implement movement over bin in front at endgame
+    endgame_move_to_bin();
+
     set_claw_state(CLAW_RELEASE);
 
     delay(1000); // wait a sec showing that it's over

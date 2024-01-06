@@ -11,8 +11,11 @@ MultiStepper xSteppers;
 HT16K33 display(I2C_SCREEN_ADDR);
 
 const float stepper_speed = STEPPER_MICROSTEPS * 8000;
-const long stepperMinPos = -80000; // Y
-const long stepperMaxPos = 80000; // Y
+
+const long yStepperMinPostAfterZeroing = -45800;
+const long yStepperMaxPostAfterZeroing = 0;
+long yStepperMinPos = -80000;
+long yStepperMaxPos = 80000;
 
 // for X1 and X2, both values should be the same
 // when X1 and X2 are zeroed, min is set to 0
@@ -20,7 +23,7 @@ const long xStepperMinPosAfterZeroing = -45800;
 const long xStepperMaxPosAfterZeroing = 0;
 long stepperMinMulti[] = {-80000, -80000};
 long stepperMaxMulti[] = {80000, 80000};
-bool xZeroed = false;
+bool xZeroed = false, yZeroed = false;
 
 unsigned long prevClawTransTime = 0;
 const unsigned long clawToggleDebounceTime = 150;
@@ -124,11 +127,14 @@ void toggle_claw_state()
         set_claw_state(CLAW_RELEASE);
         set_start_button_led(false);
     }
-    Serial.print("1: ");
-    Serial.println(x1Stepper.currentPosition());
 
-    Serial.print("2: ");
-    Serial.println(x2Stepper.currentPosition());
+    // debug print the current stepper positions (useful for configuring the limits/homing)
+    Serial.print("DEBUG: x1Stepper=");
+    Serial.print(x1Stepper.currentPosition());
+    Serial.print(", x2Stepper=");
+    Serial.print(x2Stepper.currentPosition());
+    Serial.print(", yStepper=");
+    Serial.println(yStepper.currentPosition());
 }
 
 /* True=Triggered, False=Not Triggered. */
@@ -286,6 +292,10 @@ AccelStepper& init_stepper(AccelStepper &stepper, uint8_t enablePin, uint8_t ste
     // stepper.setSpeed(500*16);
     stepper.enableOutputs();
 
+    x1Stepper.setSpeed(stepper_speed);
+    x2Stepper.setSpeed(stepper_speed);
+    yStepper.setSpeed(stepper_speed);
+
     return stepper;
 }
 
@@ -310,8 +320,6 @@ void home_x_axis()
     set_stepper_enable(1);
 
     // move the claw to the left until it hits the limit switch
-    x1Stepper.setSpeed(stepper_speed);
-    x2Stepper.setSpeed(stepper_speed);
     while (!get_switch_state(LIMIT_X1) && !get_switch_state(LIMIT_X2)) {
         x1Stepper.runSpeed();
         x2Stepper.runSpeed();
@@ -343,6 +351,49 @@ void home_x_axis()
     Serial.println("INFO: X axis homed.");
 }
 
+void endgame_move_to_bin() {
+    // moves axes over the bin; blocking
+    // also zeros the Y axis
+
+    Serial.println("INFO: Starting endgame_move_to_bin()");
+
+    // move the claw to the front (neg X)
+    xSteppers.moveTo(stepperMinMulti);
+    xSteppers.runSpeedToPosition();
+    delay(150);
+
+    // move the claw to the left all the way (it'll jam, but that's fine)
+    yStepper.moveTo(yStepperMinPos);
+    yStepper.runSpeedToPosition();
+
+    // the Y axis is now zeroed
+    yStepper.setCurrentPosition(0);
+    yZeroed = true;
+
+
+    delay(150);
+
+    // drop the claw a touch for fun
+    set_z_motor_state(Z_MOTOR_DIRECTION_DROP);
+    delay(500);
+    set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
+
+    // release the claw
+    set_claw_state(CLAW_RELEASE);
+
+    // move to the middle of the bin
+    long xPos[] = {-22000, -22000};
+    xSteppers.moveTo(xPos);
+    yStepper.moveTo(-22000);
+    while (1) {
+        xSteppers.runSpeedToPosition();
+        yStepper.runSpeedToPosition();
+        if (x1Stepper.distanceToGo() <= 0 && yStepper.distanceToGo() <= 0) {
+            break;
+        }
+    }
+}
+
 void loop_moveMotorsBasedOnButtons()
 {
     // X is North/South, Y is East/West
@@ -351,24 +402,23 @@ void loop_moveMotorsBasedOnButtons()
     bool eastButton  = get_switch_state(STICK_EAST);
     bool westButton  = get_switch_state(STICK_WEST);
 
-    bool xlimit = get_switch_state(LIMIT_X1) || get_switch_state(LIMIT_X2);
-    if (xlimit && !xZeroed && prevXdir != -1) {
-        x1Stepper.setCurrentPosition(0);
-        x2Stepper.setCurrentPosition(0);
-        Serial.println("X limit reached, zeroing");
-        xZeroed = true;
-    }
+    // If it bumps the limit switch, zero the axis
+    // Not needed because the limit switches are only used for homing and are not an axis limit during regular ops
+    // bool xlimit = get_switch_state(LIMIT_X1) || get_switch_state(LIMIT_X2);
+    // if (xlimit && !xZeroed && prevXdir != -1) {
+    //     x1Stepper.setCurrentPosition(0);
+    //     x2Stepper.setCurrentPosition(0);
+    //     Serial.println("X limit reached, zeroing");
+    //     xZeroed = true;
+    // }
     
     // Positive X direction
-    if (northButton && !xlimit) {
+    if (northButton) {
         if (prevXdir != 1) {  // direction change
             Serial.println("Moving claw North");
             prevXdir = 1;
-            // x1Stepper.moveTo(stepperMaxPos);
+            // x1Stepper.moveTo(yStepperMaxPos);
             xSteppers.moveTo(stepperMaxMulti);
-
-            // x1Stepper.setSpeed(stepper_speed);
-            // x2Stepper.setSpeed(stepper_speed);
         }
         xSteppers.run();
         xZeroed = false;
@@ -381,9 +431,6 @@ void loop_moveMotorsBasedOnButtons()
             Serial.println("Moving claw South");
             prevXdir = -1;
             xSteppers.moveTo(stepperMinMulti);
-
-            // x1Stepper.setSpeed(-stepper_speed);
-            // x2Stepper.setSpeed(-stepper_speed);
         }
         xSteppers.run();
         xZeroed = false;
@@ -395,24 +442,25 @@ void loop_moveMotorsBasedOnButtons()
         if (prevYdir != 1) {  // direction change
             Serial.println("Moving claw East");
             prevYdir = 1;
-            // yStepper.moveTo(stepperMaxPos);
+            yStepper.moveTo(yStepperMaxPos);
             yStepper.setSpeed(stepper_speed);
         }
         // yStepper.run();
-        // yStepper.runSpeedToPosition();
-        yStepper.runSpeed();
+        yStepper.runSpeedToPosition();
+        // yStepper.runSpeed();
     }
     // Negative Y direction
     else if (westButton == HIGH) {
         if (prevYdir != -1) {  // direction change
             Serial.println("Moving claw West");
             prevYdir = -1;
-            // yStepper.moveTo(stepperMinPos);
+            // yStepper.setSpeed(-stepper_speed);
+            yStepper.moveTo(yStepperMinPos);
             yStepper.setSpeed(-stepper_speed);
         }
         // yStepper.run();
-        // yStepper.runSpeedToPosition();
-        yStepper.runSpeed();
+        yStepper.runSpeedToPosition();
+        // yStepper.runSpeed();
     }
 
 }

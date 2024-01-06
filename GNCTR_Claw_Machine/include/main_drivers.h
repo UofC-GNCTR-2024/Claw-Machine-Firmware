@@ -60,6 +60,7 @@ AccelStepper& init_stepper(AccelStepper &stepper, uint8_t enablePin, uint8_t ste
 void loop_moveMotorsBasedOnButtons();
 void loop_dropOrRaiseClaw();
 void home_x_axis();
+void endgame_move_to_bin();
 
 void i2c_scan();
 
