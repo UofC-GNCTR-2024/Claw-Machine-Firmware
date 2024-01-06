@@ -78,10 +78,11 @@ game_state_t play_state(game_state_t prev)
     }
 
     // do a countdown
+    // TODO: changes this to a 4321 removing the numbers
     set_start_button_led(false);
     for (uint16_t i = 3333; i >= 1111; i -= 1111) {
         display_int(i);
-        delay(900);
+        delay(600);
     }
     set_start_button_led(true);
 
@@ -112,8 +113,6 @@ game_state_t play_state(game_state_t prev)
         loop_dropOrRaiseClaw();
     }
 
-    // TODO: early exit if the claw is dropped over the target
-
     Serial.println("INFO: game over");
     
     return GAME_STATE_RESET;
@@ -132,6 +131,7 @@ game_state_t reset_state(game_state_t prev)
     // set known state
     set_start_button_led(false);
     set_claw_state(CLAW_ENGAGE);
+    delay(250); // wait for claw to close before lifting
     set_z_motor_state(Z_MOTOR_DIRECTION_RAISE);
 
     // wait for claw to raise all the way, and then drop it a touch
