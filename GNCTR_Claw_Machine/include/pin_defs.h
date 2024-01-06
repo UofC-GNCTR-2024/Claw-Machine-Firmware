@@ -46,7 +46,7 @@
 
 // General Power Output Pins
 #define PIN_GENERAL_PWR_EN_0 47 // aka PIN_CLAW_EN
-#define PIN_GENERAL_PWR_EN_1 48
+#define PIN_GENERAL_PWR_EN_1 48 // enclosure LED
 #define PIN_GENERAL_PWR_EN_2 49 // unusable
 #define PIN_GENERAL_PWR_EN_3 50 // flashing start button LED
 #define PIN_CLAW_EN PIN_GENERAL_PWR_EN_0

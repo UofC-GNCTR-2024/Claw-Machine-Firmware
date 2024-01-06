@@ -3,6 +3,8 @@
 #define __INCLUDE_GUARD_STATES_H_CLAW_MACHINE__
 
 typedef enum {
+    GAME_STATE_BOOT, // On boot
+    GAME_STATE_HOMING,  // Homing the claw
     GAME_STATE_IDLE,  // Waiting for someone to press start
     GAME_STATE_PLAY,  // Controlling the claw
     GAME_STATE_RESET  // Return the claw to the home position
@@ -13,6 +15,7 @@ typedef enum {
     HOME
 } reset_substate_t;
 
+game_state_t homing_state(game_state_t prev);
 
 game_state_t idle_state(game_state_t prev);
 

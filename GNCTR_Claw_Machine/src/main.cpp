@@ -2,8 +2,8 @@
 #include "states.h"
 #include <Arduino.h>
 
-game_state_t prev_game_state = GAME_STATE_IDLE; 
-game_state_t game_state = GAME_STATE_IDLE; 
+game_state_t prev_game_state = GAME_STATE_BOOT; 
+game_state_t game_state = GAME_STATE_BOOT; 
 
 void setup()
 {
@@ -27,6 +27,12 @@ void loop()
 {
     game_state_t game_state_at_start_of_loop = game_state;
     switch (game_state) {
+        case GAME_STATE_BOOT:
+            game_state = GAME_STATE_HOMING;
+            break;
+        case GAME_STATE_HOMING:
+            game_state = homing_state(prev_game_state);
+            break;
         case GAME_STATE_IDLE:
             game_state = idle_state(prev_game_state);
             break;

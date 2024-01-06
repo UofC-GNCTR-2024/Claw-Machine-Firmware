@@ -48,6 +48,7 @@ bool get_switch_state(limit_switch_t limit_switch);
 void set_z_motor_state(z_motor_direction_t direction);
 
 void set_start_button_led(bool state);
+void set_enclosure_led(bool state);
 
 void debug_print_all_limit_switch_states();
 void debug_print_all_limit_switch_states(bool verbose);
@@ -58,6 +59,7 @@ AccelStepper& init_stepper(AccelStepper &stepper, uint8_t enablePin, uint8_t ste
 
 void loop_moveMotorsBasedOnButtons();
 void loop_dropOrRaiseClaw();
+void loop_homing();
 
 void i2c_scan();
 
@@ -66,6 +68,7 @@ void display_duration_ms(uint32_t duration_ms);
 void display_blinking_zeros();
 void display_scrolling_press_start(uint32_t idle_start_time_ms);
 void display_int(uint16_t int_val);
+void display_raw_message(uint8_t *message);
 
 void set_stepper_enable(bool enable);
 

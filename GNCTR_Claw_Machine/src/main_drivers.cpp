@@ -11,10 +11,16 @@ MultiStepper xSteppers;
 HT16K33 display(I2C_SCREEN_ADDR);
 
 const float stepper_speed = STEPPER_MICROSTEPS * 8000;
-const long stepperMinPos = -80000;
-const long stepperMaxPos = 80000;
-long stepperMinMulti[] = {stepperMinPos, stepperMinPos};
-long stepperMaxMulti[] = {stepperMaxPos, stepperMaxPos};
+const long stepperMinPos = -80000; // Y
+const long stepperMaxPos = 80000; // Y
+
+// for X1 and X2, both values should be the same
+// when X1 and X2 are zeroed, min is set to 0
+const long xStepperMinPosAfterZeroing = -45800;
+const long xStepperMaxPosAfterZeroing = 0;
+long stepperMinMulti[] = {-80000, -80000};
+long stepperMaxMulti[] = {80000, 80000};
+bool xZeroed = false;
 
 unsigned long prevClawTransTime = 0;
 const unsigned long clawToggleDebounceTime = 150;
@@ -118,6 +124,11 @@ void toggle_claw_state()
         set_claw_state(CLAW_RELEASE);
         set_start_button_led(false);
     }
+    Serial.print("1: ");
+    Serial.println(x1Stepper.currentPosition());
+
+    Serial.print("2: ");
+    Serial.println(x2Stepper.currentPosition());
 }
 
 /* True=Triggered, False=Not Triggered. */
@@ -182,6 +193,10 @@ void set_z_motor_state(z_motor_direction_t direction)
 
 void set_start_button_led(bool state) {
     digitalWrite(PIN_GENERAL_PWR_EN_3, state);
+}
+
+void set_enclosure_led(bool state) {
+    digitalWrite(PIN_GENERAL_PWR_EN_1, state);
 }
 
 void debug_print_all_limit_switch_states()
@@ -286,6 +301,36 @@ void init_steppers()
     xSteppers.addStepper(x2Stepper);
 }
 
+void loop_homing()
+{
+    // move the claw to the left until it hits the limit switch
+    x1Stepper.setSpeed(stepper_speed);
+    x2Stepper.setSpeed(stepper_speed);
+    while (!get_switch_state(LIMIT_X1) && !get_switch_state(LIMIT_X2)) {
+        x1Stepper.runSpeed();
+        x2Stepper.runSpeed();
+    }
+
+    x1Stepper.setCurrentPosition(0);
+    x2Stepper.setCurrentPosition(0);
+    // while (!get_switch_state(LIMIT_X1) || !get_switch_state(LIMIT_X2)) {
+    //     if (!get_switch_state(LIMIT_X1)) {
+    //         x1Stepper.runSpeed();
+    //     }
+    //     if (!get_switch_state(LIMIT_X2)) {
+    //         x2Stepper.runSpeed();
+    //     }
+    // }
+    // set the limits
+    stepperMinMulti[0] = xStepperMinPosAfterZeroing;
+    stepperMinMulti[1] = xStepperMinPosAfterZeroing;
+    stepperMaxMulti[0] = xStepperMaxPosAfterZeroing;
+    stepperMaxMulti[1] = xStepperMaxPosAfterZeroing;
+
+    xZeroed = true;
+    Serial.println("INFO: X axis homed.");
+}
+
 void loop_moveMotorsBasedOnButtons()
 {
     // X is North/South, Y is East/West
@@ -293,9 +338,17 @@ void loop_moveMotorsBasedOnButtons()
     bool southButton = get_switch_state(STICK_SOUTH);
     bool eastButton  = get_switch_state(STICK_EAST);
     bool westButton  = get_switch_state(STICK_WEST);
+
+    bool xlimit = get_switch_state(LIMIT_X1) || get_switch_state(LIMIT_X2);
+    if (xlimit && !xZeroed && prevXdir != -1) {
+        x1Stepper.setCurrentPosition(0);
+        x2Stepper.setCurrentPosition(0);
+        Serial.println("X limit reached, zeroing");
+        xZeroed = true;
+    }
     
     // Positive X direction
-    if (northButton) {
+    if (northButton && !xlimit) {
         if (prevXdir != 1) {  // direction change
             Serial.println("Moving claw North");
             prevXdir = 1;
@@ -306,6 +359,7 @@ void loop_moveMotorsBasedOnButtons()
             // x2Stepper.setSpeed(stepper_speed);
         }
         xSteppers.run();
+        xZeroed = false;
         // x1Stepper.runSpeedToPosition();
         // xSteppers.runSpeedToPosition();
     }
@@ -320,6 +374,7 @@ void loop_moveMotorsBasedOnButtons()
             // x2Stepper.setSpeed(-stepper_speed);
         }
         xSteppers.run();
+        xZeroed = false;
         // xSteppers.runSpeedToPosition();
     }
 
@@ -442,6 +497,11 @@ void display_int(uint16_t int_val) {
     display.setBlink(0);
 }
 
+void display_raw_message(uint8_t *message) {
+    // message should be 4 bytes long (array)
+    display.displayRaw(message);
+}
+
 void display_scrolling_press_start(uint32_t idle_start_time_ms) {
     display.setBlink(0);
     display.displayColon(0);
@@ -471,7 +531,7 @@ void display_scrolling_press_start(uint32_t idle_start_time_ms) {
         // seg2_data[i] = SEG_PRESS_START[(i+offset+5)%msg_len];
     }
 
-    display.displayRaw(seg1_data);
+    display_raw_message(seg1_data);
 }
 
 void set_stepper_enable(bool enable) {

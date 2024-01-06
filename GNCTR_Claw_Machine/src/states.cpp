@@ -15,6 +15,32 @@ uint32_t idle_start_time_ms = 0;
 // persistent vars for GAME_STATE_RESET
 
 
+game_state_t homing_state(game_state_t prev)
+{
+    if (prev != GAME_STATE_HOMING) {
+        Serial.println("Starting GAME_STATE_HOMING state");
+        set_start_button_led(false);
+        set_claw_state(CLAW_RELEASE);
+        set_stepper_enable(1);
+
+        // write the homing message to the LCD
+        uint8_t seg_zero_message_for_display[] = {
+            SEG_A | SEG_B | SEG_G | SEG_E | SEG_D,  // Z
+            SEG_A | SEG_F | SEG_E | SEG_G | SEG_D,  // E
+            SEG_E | SEG_G,                          // r
+            // SEG_A | SEG_B | SEG_C | SEG_D | SEG_E | SEG_F, // 0
+            SEG_C | SEG_D | SEG_E | SEG_G, // 0
+        };
+
+        display_int(0); // hmm
+        display_raw_message(seg_zero_message_for_display);
+    }
+    
+    loop_homing();
+
+    return GAME_STATE_IDLE;
+}
+
 game_state_t idle_state(game_state_t prev)
 {
     if (prev != GAME_STATE_IDLE) {
@@ -35,6 +61,9 @@ game_state_t idle_state(game_state_t prev)
     // set the motors idle
     set_z_motor_state(Z_MOTOR_DIRECTION_STOP);
     set_stepper_enable(0);
+
+    // set lights on
+    set_enclosure_led(true);
     
     // do a semi-sentient "clip-clip" with the claw like a crab
     uint32_t millis_mod_10sec = millis() % 10000;
