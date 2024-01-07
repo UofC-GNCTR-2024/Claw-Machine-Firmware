@@ -13,7 +13,7 @@ extern uint32_t global_last_user_input_time_ms; // global extern
 const long xAxisLength = 46000;
 const long yAxisLength = 50000;
 
-#define Z_UP_TO_DOWN_RATIO 1.25
+#define Z_UP_TO_DOWN_RATIO 1.21
 #define Z_BRAKE_DURATION_MS 50
 
 typedef enum {

@@ -91,12 +91,14 @@ game_state_t idle_state(game_state_t prev)
     if (get_switch_state(START_BTN)) {
         return GAME_STATE_PLAY;
     }
-    else if (get_switch_state(CLAW_GRAB_BTN)) { // cheat code to start demo
+    // cheat code to start demo, during 2 minutes after boot
+    else if ((millis() < 120000) && get_switch_state(CLAW_GRAB_BTN)) {
         return GAME_STATE_DEMO;
     }
-    else if (get_switch_state(CLAW_DOWN_BTN)) {
-        return GAME_STATE_GNCTR_EASTER_EGG;
-    }
+    // else if (get_switch_state(CLAW_DOWN_BTN)) {
+    //     return GAME_STATE_GNCTR_EASTER_EGG;
+    // }
+    // TODO: activate GAME_STATE_GNCTR_EASTER_EGG with a cheat code
 
     // start the demo if it's been idle for a while
     if (millis() - idle_start_time_ms > (idle_time_to_start_demo_sec * 1000)) {
@@ -241,6 +243,7 @@ game_state_t play_state(game_state_t prev)
 
     uint32_t play_state_start_time_ms = millis();
     uint32_t last_play_state_tenthsec = 0;
+    global_last_user_input_time_ms = millis(); // fake input right at start
     while (millis() - play_state_start_time_ms < (game_play_max_time_sec*1000)) {
         
         // display the time
@@ -316,6 +319,10 @@ void finish_demo() {
     // release claw
     set_claw_state(CLAW_RELEASE);
 
+    // set enclosure lights on and display to countdown
+    set_enclosure_led(true);
+    display_int(4321);
+
     // move claw up
     home_z_motor(2000);
 
@@ -323,6 +330,6 @@ void finish_demo() {
     move_claw_to_absolute_xy(xAxisLength/2, yAxisLength/2);
 
     // pause before it starts the countdown to play (in case it's playing next)
-    delay(750);
+    delay(250);
 }
 
