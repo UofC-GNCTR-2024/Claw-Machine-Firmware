@@ -274,9 +274,6 @@ game_state_t play_state(game_state_t prev)
         }
 
         // respond to button presses
-        for (int i = 0; i < 10; i++) {
-            loop_moveMotorsBasedOnButtons();
-        }
         loop_moveMotorsBasedOnButtons();
         loop_dropOrRaiseClaw();
     }

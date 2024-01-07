@@ -525,8 +525,8 @@ bool move_to_absolute_xy_and_watch_for_start_press(long x, long y) {
 
     uint32_t last_check_time = millis();
     while (1) {
-        bool all_done = false;
-        for (uint16_t i = 0; i < 1000; i++) {
+        bool all_done = false; // this tracking is actually probably not necessary
+        for (uint16_t i = 0; i < 10; i++) {
             if (!xxySteppers.run()) {
                 all_done = true;
                 break;
@@ -536,7 +536,7 @@ bool move_to_absolute_xy_and_watch_for_start_press(long x, long y) {
             break;
         }
 
-        if (millis() - last_check_time > 100) {
+        if (millis() - last_check_time > 50) { // period of start button check
             last_check_time = millis();
             if (get_switch_state(START_BTN)) {
                 set_start_button_led(false);
@@ -697,7 +697,7 @@ void loop_moveMotorsBasedOnButtons()
     }
 
     // run the steppers
-    for (uint16_t i = 0; i < 1000; i++) {
+    for (uint16_t i = 0; i < 50; i++) {
         xxySteppers.run();
     }
     // xxySteppers.run();
