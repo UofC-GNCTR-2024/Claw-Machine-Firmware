@@ -247,6 +247,18 @@ game_state_t play_state(game_state_t prev)
         uint32_t play_time_remaining_ms = (game_play_max_time_sec*1000) - (millis() - play_state_start_time_ms);
         uint32_t play_time_remaining_tenthsec = play_time_remaining_ms/100;
 
+        // check the inactivity timeout
+        if (millis() - global_last_user_input_time_ms > (game_play_inactive_exit_time_sec*1000)) {
+            Serial.println("INFO: decreasing remaining time because of inactivity");
+            
+            // hack: set the start time to a fake start time
+            // set to (game_play_inactive_exit_time_sec-1) sec remaining
+            play_state_start_time_ms = millis() - (game_play_max_time_sec*1000) + ((game_play_inactive_exit_time_sec-1)*1000);
+
+            // send a fake input to reset the inactivity timer to avoid an infinite loop here
+            global_last_user_input_time_ms = millis();
+        }
+
         if (play_time_remaining_tenthsec != last_play_state_tenthsec) {
             last_play_state_tenthsec = play_time_remaining_tenthsec;
             

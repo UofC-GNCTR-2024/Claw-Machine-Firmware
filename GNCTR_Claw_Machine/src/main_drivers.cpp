@@ -6,6 +6,8 @@
 #include <HT16K33.h>
 #include "game_config.h"
 
+uint32_t global_last_user_input_time_ms = millis(); // global extern
+
 AccelStepper x1Stepper, x2Stepper, yStepper;
 MultiStepper xSteppers, xxySteppers;
 
@@ -150,35 +152,52 @@ void debug_print_axes_info() {
 /* True=Triggered, False=Not Triggered. */
 bool get_switch_state(limit_switch_t limit_switch)
 {
+    bool sw_state;
     switch (limit_switch) {
         case LIMIT_X1:
-            return digitalRead(PIN_LIMIT_X1);
+            sw_state = digitalRead(PIN_LIMIT_X1);
+            break;
         case LIMIT_X2:
-            return digitalRead(PIN_LIMIT_X2);
+            sw_state = digitalRead(PIN_LIMIT_X2);
+            break;
         case LIMIT_Y:
-            return digitalRead(PIN_LIMIT_Y);
+            sw_state = digitalRead(PIN_LIMIT_Y);
+            break;
         case CLAW_UP_BTN:
-            return digitalRead(PIN_INPUT_BTN_1);
+            sw_state = digitalRead(PIN_INPUT_BTN_1);
+            break;
         case CLAW_DOWN_BTN:
-            return digitalRead(PIN_INPUT_BTN_2);
+            sw_state = digitalRead(PIN_INPUT_BTN_2);
+            break;
         case CLAW_GRAB_BTN:
-            return digitalRead(PIN_INPUT_BTN_3);
+            sw_state = digitalRead(PIN_INPUT_BTN_3);
+            break;
         case START_BTN:
-            return digitalRead(PIN_AUX_SW_1);
+            sw_state = digitalRead(PIN_AUX_SW_1);
+            break;
         case AUX_SW_2:
-            return digitalRead(PIN_AUX_SW_2);
+            sw_state = digitalRead(PIN_AUX_SW_2);
+            break;
         case STICK_NORTH:
-            return digitalRead(PIN_STICK_NORTH_BTN);
+            sw_state = digitalRead(PIN_STICK_NORTH_BTN);
+            break;
         case STICK_EAST:
-            return digitalRead(PIN_STICK_EAST_BTN);
+            sw_state = digitalRead(PIN_STICK_EAST_BTN);
+            break;
         case STICK_SOUTH:
-            return digitalRead(PIN_STICK_SOUTH_BTN);
+            sw_state = digitalRead(PIN_STICK_SOUTH_BTN);
+            break;
         case STICK_WEST:
-            return digitalRead(PIN_STICK_WEST_BTN);
+            sw_state = digitalRead(PIN_STICK_WEST_BTN);
+            break;
         default:
             Serial.println("ERROR: Coding error. Invalid limit_switch_t value.");
             return false;
     }
+    if (sw_state) {
+        global_last_user_input_time_ms = millis();
+    }
+    return sw_state;
 }
 
 void set_z_motor_state(z_motor_direction_t direction)

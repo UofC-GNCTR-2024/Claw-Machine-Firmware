@@ -6,6 +6,8 @@
 #include "main.h"
 #include <AccelStepper.h>
 
+extern uint32_t global_last_user_input_time_ms; // global extern
+
 #define STEPPER_MICROSTEPS 16.0
 
 const long xAxisLength = 46000;
